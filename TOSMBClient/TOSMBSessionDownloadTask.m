@@ -35,8 +35,6 @@
 @property (nonatomic, strong, readwrite) NSString *destinationFilePath;
 @property (nonatomic, strong) NSString *tempFilePath;
 
-@property (nonatomic, strong) TOSMBSessionFile *file;
-
 @property (assign, readwrite) int64_t countOfBytesReceived;
 @property (assign, readwrite) int64_t countOfBytesExpectedToReceive;
 
@@ -72,8 +70,8 @@
 
 - (instancetype)initWithSession:(TOSMBSession *)session filePath:(NSString *)filePath destinationPath:(NSString *)destinationPath delegate:(id<TOSMBSessionDownloadTaskDelegate>)delegate
 {
-    if ((self = [super initWithSession:session])) {
-        _sourceFilePath = filePath;
+    if ((self = [super initWithSession:session path:filePath])) {
+        
         _destinationFilePath = destinationPath.length ? destinationPath : [self documentsDirectory];
         self.delegate = delegate;
         
@@ -85,9 +83,9 @@
 
 - (instancetype)initWithSession:(TOSMBSession *)session filePath:(NSString *)filePath destinationPath:(NSString *)destinationPath progressHandler:(id)progressHandler successHandler:(id)successHandler failHandler:(id)failHandler
 {
-    if (([super initWithSession:session])) {
+    if (([super initWithSession:session path:filePath])) {
         self.session = session;
-        _sourceFilePath = filePath;
+        
         _destinationFilePath = destinationPath.length ? destinationPath : [self documentsDirectory];
         
         self.progressHandler = progressHandler;
@@ -263,91 +261,7 @@
     if (weakOperation.isCancelled)
         return;
     
-    smb_tid treeID = 0;
-    smb_fd fileID = 0;
-    
-    //---------------------------------------------------------------------------------------
-    //Connect to SMB device
-    
-    self.smbSession = smb_session_new();
-    
-    //First, check to make sure the server is there, and to acquire its attributes
-    __block NSError *error = nil;
-    dispatch_sync(self.session.serialQueue, ^{
-        error = [self.session attemptConnectionWithSessionPointer:self.smbSession];
-    });
-    if (error) {
-        [self didFailWithError:error];
-        self.cleanupBlock(treeID, fileID);
-        return;
-    }
-    
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, fileID);
-        return;
-    }
-    
-    //---------------------------------------------------------------------------------------
-    //Connect to share
-    
-    //Next attach to the share we'll be using
-    NSString *shareName = [self.session shareNameFromPath:self.sourceFilePath];
-    const char *shareCString = [shareName cStringUsingEncoding:NSUTF8StringEncoding];
-    smb_tree_connect(self.smbSession, shareCString, &treeID);
-    if (!treeID) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeShareConnectionFailed)];
-        self.cleanupBlock(treeID, fileID);
-        return;
-    }
-    
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, fileID);
-        return;
-    }
-    
-    //---------------------------------------------------------------------------------------
-    //Find the target file
-    
-    NSString *formattedPath = [self.session filePathExcludingSharePathFromPath:self.sourceFilePath];
-    formattedPath = [NSString stringWithFormat:@"\\%@",formattedPath];
-    formattedPath = [formattedPath stringByReplacingOccurrencesOfString:@"/" withString:@"\\\\"];
-    
-    //Get the file info we'll be working off
-    self.file = [self requestFileForItemAtPath:formattedPath inTree:treeID];
-    if (self.file == nil) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
-        self.cleanupBlock(treeID, fileID);
-        return;
-    }
-    
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, fileID);
-        return;
-    }
-    
-    if (self.file.directory) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeDirectoryDownloaded)];
-        self.cleanupBlock(treeID, fileID);
-        return;
-    }
-    
     self.countOfBytesExpectedToReceive = self.file.fileSize;
-    
-    //---------------------------------------------------------------------------------------
-    //Open the file handle
-    
-    smb_fopen(self.smbSession, treeID, [formattedPath cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RO, &fileID);
-    if (!fileID) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
-        self.cleanupBlock(treeID, fileID);
-        return;
-    }
-    
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, fileID);
-        return;
-    }
-    
     
     //---------------------------------------------------------------------------------------
     //Start downloading
@@ -368,7 +282,7 @@
     self.backgroundTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{ [self suspend]; }];
     
     if (seekOffset > 0) {
-        smb_fseek(self.smbSession, fileID, (ssize_t)seekOffset, SMB_SEEK_SET);
+        smb_fseek(self.smbSession, self.fileID, (ssize_t)seekOffset, SMB_SEEK_SET);
         [self didResumeAtOffset:seekOffset totalBytesExpected:self.countOfBytesExpectedToReceive];
     }
     
@@ -379,7 +293,7 @@
     
     do {
         //Read the bytes from the network device
-        bytesRead = smb_fread(self.smbSession, fileID, buffer, bufferSize);
+        bytesRead = smb_fread(self.smbSession, self.fileID, buffer, bufferSize);
         if (bytesRead < 0) {
             [self fail];
             [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileDownloadFailed)];
@@ -409,7 +323,7 @@
     [fileHandle closeFile];
     
     if (weakOperation.isCancelled  || self.state != TOSMBSessionTaskStateRunning) {
-        self.cleanupBlock(treeID, fileID);
+        self.cleanupBlock();
         return;
     }
     
@@ -426,7 +340,7 @@
     [self didSucceedWithFilePath:finalDestinationPath];
     
     //Perform a final cleanup of all handles and references
-    self.cleanupBlock(treeID, fileID);
+    self.cleanupBlock();
 }
 
 @end

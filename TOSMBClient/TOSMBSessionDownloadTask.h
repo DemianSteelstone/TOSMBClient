@@ -76,9 +76,6 @@ totalBytesExpectedToReceive:(uint64_t)totalBytesToReceive;
 
 @interface TOSMBSessionDownloadTask : TOSMBSessionTask
 
-/** The file path to the target file on the SMB network device. */
-@property (readonly) NSString *sourceFilePath;
-
 /** The target file path that the file will be downloaded to. */
 @property (readonly) NSString *destinationFilePath;
 

@@ -24,9 +24,10 @@
 
 @implementation TOSMBSessionTask
 
-- (instancetype)initWithSession:(TOSMBSession *)session {
+- (instancetype)initWithSession:(TOSMBSession *)session path:(nonnull NSString *)smbPath {
     if((self = [super init])) {
         self.session = session;
+        _smbFilePath = smbPath;
     }
     
     return self;
@@ -51,8 +52,8 @@
     return _taskOperation;
 }
 
-- (void (^)(smb_tid treeID, smb_fd fileID))cleanupBlock {
-    return ^(smb_tid treeID, smb_fd fileID) {
+- (dispatch_block_t)cleanupBlock {
+    return ^{
         
         //Release the background task handler, making the app eligible to be suspended now
         if (self.backgroundTaskIdentifier) {
@@ -60,12 +61,12 @@
             self.backgroundTaskIdentifier = 0;
         }
         
-        if (self.taskOperation && treeID) {
-            smb_tree_disconnect(self.smbSession, treeID);
+        if (self.taskOperation && self.treeID) {
+            smb_tree_disconnect(self.smbSession, self.treeID);
         }
         
-        if (self.smbSession && fileID) {
-            smb_fclose(self.smbSession, fileID);
+        if (self.smbSession && self.fileID) {
+            smb_fclose(self.smbSession, self.fileID);
         }
 
         
@@ -90,6 +91,124 @@
     smb_stat_destroy(fileStat);
     
     return file;
+}
+
+-(BOOL)connectToSMBDeviceOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+{
+    self.treeID = 0;
+    self.fileID = 0;
+    
+    self.smbSession = smb_session_new();
+    
+    //First, check to make sure the server is there, and to acquire its attributes
+    __block NSError *error = nil;
+    dispatch_sync(self.session.serialQueue, ^{
+        error = [self.session attemptConnectionWithSessionPointer:self.smbSession];
+    });
+    if (error) {
+        [self didFailWithError:error];
+        self.cleanupBlock();
+        return NO;
+    }
+    
+    if (weakOperation.isCancelled) {
+        self.cleanupBlock();
+        return NO;
+    }
+    
+    return YES;
+}
+
+-(BOOL)connectToShareWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+{
+    //Connect to share
+    
+    smb_tid treeID;
+    //Next attach to the share we'll be using
+    NSString *shareName = [self.session shareNameFromPath:self.smbFilePath];
+    const char *shareCString = [shareName cStringUsingEncoding:NSUTF8StringEncoding];
+    smb_tree_connect(self.smbSession, shareCString, &treeID);
+    if (!treeID) {
+        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeShareConnectionFailed)];
+        self.cleanupBlock();
+        return NO;
+    }
+    
+    self.treeID = treeID;
+    
+    if (weakOperation.isCancelled) {
+        self.cleanupBlock();
+        return NO;
+    }
+    
+    return YES;
+}
+
+-(BOOL)findTargetFileWithOoperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+{
+    //Find the target file
+    //Get the file info we'll be working off
+    self.file = [self requestFileForItemAtPath:self.formattedFilePath inTree:self.treeID];
+    
+    if (self.isNewFile == NO)
+    {
+        if (self.file == nil) {
+            [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
+            self.cleanupBlock();
+            return NO;
+        }
+    }
+    
+    if (weakOperation.isCancelled) {
+        self.cleanupBlock();
+        return NO;
+    }
+    
+    if (self.file.directory) {
+        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeDirectoryDownloaded)];
+        self.cleanupBlock();
+        return NO;
+    }
+    return YES;
+}
+
+-(BOOL)openFileWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+{
+    smb_fd fileID = 0;;
+    //Open the file handle
+    smb_fopen(self.smbSession, self.treeID, [self.formattedFilePath cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
+    if (!fileID) {
+        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
+        self.cleanupBlock();
+        return NO;
+    }
+    
+    self.fileID = fileID;
+    
+    if (weakOperation.isCancelled) {
+        self.cleanupBlock();
+        return NO;
+    }
+    return YES;
+}
+
+-(BOOL)prepareWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+{
+    if ([self connectToSMBDeviceOperation:weakOperation])
+    {
+        if ([self connectToShareWithOperation:weakOperation])
+        {
+            if ([self findTargetFileWithOoperation:weakOperation])
+            {
+                if ([self openFileWithOperation:weakOperation])
+                {
+                    [self performTaskWithOperation:weakOperation];
+                }
+            }
+        }
+    }
+    
+    return NO;
 }
 
 - (void)performTaskWithOperation:(__weak NSBlockOperation *)operation {
@@ -126,6 +245,16 @@
     self.state = TOSMBSessionTaskStateCancelled;
     
     self.taskOperation = nil;
+}
+
+#pragma mark - Private
+
+-(NSString *)formattedFilePath
+{
+    NSString *formattedPath = [self.session filePathExcludingSharePathFromPath:self.smbFilePath];
+    formattedPath = [NSString stringWithFormat:@"\\%@",formattedPath];
+    formattedPath = [formattedPath stringByReplacingOccurrencesOfString:@"/" withString:@"\\\\"];
+    return formattedPath;
 }
 
 #pragma mark - Private Control Methods

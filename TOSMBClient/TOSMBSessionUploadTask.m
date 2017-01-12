@@ -25,12 +25,8 @@
 
 @interface TOSMBSessionUploadTask ()
 
-@property (nonatomic, copy) NSString *path;
-
 @property (nonatomic, strong) NSFileHandle *sourceFilehandle;
 @property (nonatomic) long long fileSize;
-
-@property (nonatomic, strong) TOSMBSessionFile *file;
 
 @property (nonatomic, weak) id <TOSMBSessionUploadTaskDelegate> delegate;
 @property (nonatomic, copy) void (^successHandler)(TOSMBSessionFile *file);
@@ -45,12 +41,10 @@
                      sourcePath:(NSString *)srcPath
                         dstPath:(NSString *)dstPath
 {
-    if ((self = [super initWithSession:session])) {
-        
-        self.path = dstPath;
+    if ((self = [super initWithSession:session path:dstPath])) {
         
         self.sourceFilehandle = [NSFileHandle fileHandleForReadingAtPath:srcPath];
-        
+        self.isNewFile = YES;
         NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:srcPath error:NULL];
         self.fileSize = [attributes fileSize];
     }
@@ -101,14 +95,14 @@
     });
 }
 
-- (void)didFinish {
+- (void)didFinishWithItem:(TOSMBSessionFile *)file {
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([weakSelf.delegate respondsToSelector:@selector(uploadTaskDidFinishUploading:)]) {
-            [weakSelf.delegate uploadTaskDidFinishUploading:self.file];
+            [weakSelf.delegate uploadTaskDidFinishUploading:file];
         }
         if (weakSelf.successHandler) {
-            weakSelf.successHandler(self.file);
+            weakSelf.successHandler(file);
         }
     });
 }
@@ -120,141 +114,32 @@
     if (weakOperation.isCancelled)
         return;
     
-    smb_tid treeID = 0;
-    smb_fd fileID = 0;
-    //---------------------------------------------------------------------------------------
+    NSData *data;
+    NSInteger chunkSize = 65471;
     
-    BOOL success = [self connectToSMBDeviceOperation:weakOperation];
-    if (success)
+    ssize_t bytesWritten = 0;
+    ssize_t totalBytesWritten = 0;
+    
+    [self.sourceFilehandle seekToFileOffset:0];
+    
+    while (((data = [self.sourceFilehandle readDataOfLength: chunkSize]).length > 0))
     {
-        success = [self connectToShare:&treeID operation:weakOperation];
+        NSUInteger bufferSize = data.length;
+        void *buffer = malloc(bufferSize);
+        [data getBytes:buffer length:bufferSize];
         
-        if (success)
-        {
-            success = [self findTargetFile:treeID operation:weakOperation];
-            if (success)
-            {
-                success = [self openFileTreeId:treeID fileID:&fileID operation:weakOperation];
-                
-                if (success)
-                {
-                    NSData *data;
-                    NSInteger chunkSize = 65471;
-                    
-                    ssize_t bytesWritten = 0;
-                    ssize_t totalBytesWritten = 0;
-                    
-                    [self.sourceFilehandle seekToFileOffset:0];
-                    
-                    while (((data = [self.sourceFilehandle readDataOfLength: chunkSize]).length > 0))
-                    {
-                        NSUInteger bufferSize = data.length;
-                        void *buffer = malloc(bufferSize);
-                        [data getBytes:buffer length:bufferSize];
-                        
-                        bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, bufferSize);
-                        
-                        free(buffer);
-                        totalBytesWritten += bytesWritten;
-                        [self didSendBytes:bytesWritten bytesSent:totalBytesWritten];
-                    }
-                    
-                    // Get uploaded file info
-                    success = [self findTargetFile:treeID operation:weakOperation];
-                    [self didFinish];
-                }
-            }
-        }
-    }
-}
-
--(BOOL)connectToSMBDeviceOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
-{
-    self.smbSession = smb_session_new();
-    
-    //First, check to make sure the server is there, and to acquire its attributes
-    __block NSError *error = nil;
-    dispatch_sync(self.session.serialQueue, ^{
-        error = [self.session attemptConnectionWithSessionPointer:self.smbSession];
-    });
-    if (error) {
-        [self didFailWithError:error];
-        self.cleanupBlock(0, 0);
-        return NO;
+        bytesWritten = smb_fwrite(self.smbSession, self.fileID, buffer, bufferSize);
+        
+        free(buffer);
+        totalBytesWritten += bytesWritten;
+        [self didSendBytes:bytesWritten bytesSent:totalBytesWritten];
     }
     
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock(0, 0);
-        return NO;
-    }
+    // Get uploaded file info
+    TOSMBSessionFile *file = [self requestFileForItemAtPath:self.smbFilePath inTree:self.treeID];
+    [self didFinishWithItem:file];
     
-    return YES;
-}
-
--(BOOL)connectToShare:(smb_tid*)treeID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
-{
-    //Connect to share
-    
-    //Next attach to the share we'll be using
-    NSString *shareName = [self.session shareNameFromPath:self.path];
-    const char *shareCString = [shareName cStringUsingEncoding:NSUTF8StringEncoding];
-    smb_tree_connect(self.smbSession, shareCString, treeID);
-    if (!treeID) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeShareConnectionFailed)];
-        self.cleanupBlock(*treeID, 0);
-        return NO;
-    }
-    
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock(*treeID, 0);
-        return NO;
-    }
-    
-    return YES;
-}
-
--(NSString *)filePath
-{
-    NSString *formattedPath = [self.session filePathExcludingSharePathFromPath:self.path];
-    formattedPath = [NSString stringWithFormat:@"\\%@",formattedPath];
-    formattedPath = [formattedPath stringByReplacingOccurrencesOfString:@"/" withString:@"\\\\"];
-    return formattedPath;
-}
-
--(BOOL)findTargetFile:(smb_tid)treeID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
-{
-    //Find the target file
-    //Get the file info we'll be working off
-    self.file = [self requestFileForItemAtPath:self.filePath inTree:treeID];
-    
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, 0);
-        return NO;
-    }
-    
-    if (self.file.directory) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeDirectoryDownloaded)];
-        self.cleanupBlock(treeID, 0);
-        return NO;
-    }
-    return YES;
-}
-
--(BOOL)openFileTreeId:(smb_tid)treeID fileID:(smb_fd*)fileID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
-{
-    //Open the file handle
-    smb_fopen(self.smbSession, treeID, [self.filePath cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, fileID);
-    if (!*fileID) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
-        self.cleanupBlock(treeID, *fileID);
-        return NO;
-    }
-    
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, *fileID);
-        return NO;
-    }
-    return YES;
+    self.cleanupBlock();
 }
 
 @end

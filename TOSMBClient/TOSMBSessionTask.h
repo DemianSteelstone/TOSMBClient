@@ -44,6 +44,9 @@
 /** The parent session that is managing this download task. (Retained by this class) */
 @property (readonly, weak) TOSMBSession *session;
 
+/** The file path to the target file on the SMB network device. */
+@property (readonly) NSString *smbFilePath;
+
 /** Returns if download data from a suspended task exists */
 @property (readonly) BOOL canBeResumed;
 
