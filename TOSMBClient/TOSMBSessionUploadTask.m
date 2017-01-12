@@ -144,13 +144,13 @@
                     ssize_t bytesWritten = 0;
                     ssize_t totalBytesWritten = 0;
                     
-                    while ((data = [self.sourceFilehandle readDataOfLength: chunkSize]).length != 0)
+                    while (((data = [self.sourceFilehandle readDataOfLength: chunkSize]).length > 0))
                     {
                         NSUInteger bufferSize = data.length;
                         void *buffer = malloc(bufferSize);
                         [data getBytes:buffer length:bufferSize];
                         
-                        bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, MIN(bufferSize, 65471));
+                        bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, bufferSize);
                         free(buffer);
                         totalBytesWritten += bytesWritten;
                         [self didSendBytes:bytesWritten bytesSent:totalBytesWritten];
