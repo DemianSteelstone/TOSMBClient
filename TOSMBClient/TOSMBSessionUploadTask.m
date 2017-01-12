@@ -121,17 +121,17 @@
     smb_fd fileID = 0;
     //---------------------------------------------------------------------------------------
     
-    BOOL success = [self connectToSMBDevice:treeID fileID:fileID operation:weakOperation];
+    BOOL success = [self connectToSMBDeviceOperation:weakOperation];
     if (success)
     {
-        success = [self connectToShare:treeID fileID:fileID operation:weakOperation];
+        success = [self connectToShare:&treeID operation:weakOperation];
         
         if (success)
         {
-            success = [self findTargetFile:treeID fileID:fileID operation:weakOperation];
+            success = [self findTargetFile:treeID operation:weakOperation];
             if (success)
             {
-                success = [self openFileTreeId:treeID fileID:fileID operation:weakOperation];
+                success = [self openFileTreeId:treeID fileID:&fileID operation:weakOperation];
                 
                 if (success)
                 {
@@ -147,7 +147,7 @@
                         void *buffer = malloc(bufferSize);
                         [data getBytes:buffer length:bufferSize];
                         
-                        bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, chunkSize);
+                        bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, bufferSize);
                         free(buffer);
                         totalBytesWritten += bytesWritten;
                         [self didSendBytes:bytesWritten bytesSent:totalBytesWritten];
@@ -160,7 +160,7 @@
     }
 }
 
--(BOOL)connectToSMBDevice:(smb_tid)treeID fileID:(smb_fd)fileID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)connectToSMBDeviceOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
 {
     self.smbSession = smb_session_new();
     
@@ -171,34 +171,34 @@
     });
     if (error) {
         [self didFailWithError:error];
-        self.cleanupBlock(treeID, fileID);
+        self.cleanupBlock(0, 0);
         return NO;
     }
     
     if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, fileID);
+        self.cleanupBlock(0, 0);
         return NO;
     }
     
     return YES;
 }
 
--(BOOL)connectToShare:(smb_tid)treeID fileID:(smb_fd)fileID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)connectToShare:(smb_tid*)treeID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
 {
     //Connect to share
     
     //Next attach to the share we'll be using
     NSString *shareName = [self.session shareNameFromPath:self.path];
     const char *shareCString = [shareName cStringUsingEncoding:NSUTF8StringEncoding];
-    smb_tree_connect(self.smbSession, shareCString, &treeID);
+    smb_tree_connect(self.smbSession, shareCString, treeID);
     if (!treeID) {
         [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeShareConnectionFailed)];
-        self.cleanupBlock(treeID, fileID);
+        self.cleanupBlock(*treeID, 0);
         return NO;
     }
     
     if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, fileID);
+        self.cleanupBlock(*treeID, 0);
         return NO;
     }
     
@@ -213,37 +213,37 @@
     return formattedPath;
 }
 
--(BOOL)findTargetFile:(smb_tid)treeID fileID:(smb_fd)fileID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)findTargetFile:(smb_tid)treeID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
 {
     //Find the target file
     //Get the file info we'll be working off
     self.file = [self requestFileForItemAtPath:self.filePath inTree:treeID];
     
     if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, fileID);
+        self.cleanupBlock(treeID, 0);
         return NO;
     }
     
     if (self.file.directory) {
         [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeDirectoryDownloaded)];
-        self.cleanupBlock(treeID, fileID);
+        self.cleanupBlock(treeID, 0);
         return NO;
     }
     return YES;
 }
 
--(BOOL)openFileTreeId:(smb_tid)treeID fileID:(smb_fd)fileID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)openFileTreeId:(smb_tid)treeID fileID:(smb_fd*)fileID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
 {
     //Open the file handle
-    smb_fopen(self.smbSession, treeID, [self.filePath cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
-    if (!fileID) {
+    smb_fopen(self.smbSession, treeID, [self.filePath cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, fileID);
+    if (!*fileID) {
         [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
-        self.cleanupBlock(treeID, fileID);
+        self.cleanupBlock(treeID, *fileID);
         return NO;
     }
     
     if (weakOperation.isCancelled) {
-        self.cleanupBlock(treeID, fileID);
+        self.cleanupBlock(treeID, *fileID);
         return NO;
     }
     return YES;
