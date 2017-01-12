@@ -71,6 +71,9 @@
 		5E391C361E27A7A800C35B01 /* TOSMBSessionRemoveTask.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E391C341E27A7A800C35B01 /* TOSMBSessionRemoveTask.h */; };
 		5E391C371E27A7A800C35B01 /* TOSMBSessionRemoveTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E391C351E27A7A800C35B01 /* TOSMBSessionRemoveTask.m */; };
 		5E7BF3851E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E7BF3841E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h */; };
+		5E7BF3881E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E7BF3861E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.h */; };
+		5E7BF3891E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E7BF3871E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.m */; };
+		5E7BF38B1E27B261000E0AA0 /* TOSMBSessionCreateFolderTaskPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E7BF38A1E27B261000E0AA0 /* TOSMBSessionCreateFolderTaskPrivate.h */; };
 		E82FE0301DD91955008E82FA /* TOSMBSessionTask.h in Headers */ = {isa = PBXBuildFile; fileRef = E82FE02E1DD91955008E82FA /* TOSMBSessionTask.h */; };
 		E82FE0311DD91955008E82FA /* TOSMBSessionTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E82FE02F1DD91955008E82FA /* TOSMBSessionTask.m */; };
 		E842C6BE1DDA48040017A7AD /* TOSMBSessionTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E82FE02F1DD91955008E82FA /* TOSMBSessionTask.m */; };
@@ -141,6 +144,9 @@
 		5E391C341E27A7A800C35B01 /* TOSMBSessionRemoveTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionRemoveTask.h; sourceTree = "<group>"; };
 		5E391C351E27A7A800C35B01 /* TOSMBSessionRemoveTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOSMBSessionRemoveTask.m; sourceTree = "<group>"; };
 		5E7BF3841E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionRemoveTaskPrivate.h; sourceTree = "<group>"; };
+		5E7BF3861E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionCreateFolderTask.h; sourceTree = "<group>"; };
+		5E7BF3871E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOSMBSessionCreateFolderTask.m; sourceTree = "<group>"; };
+		5E7BF38A1E27B261000E0AA0 /* TOSMBSessionCreateFolderTaskPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionCreateFolderTaskPrivate.h; sourceTree = "<group>"; };
 		E82FE02E1DD91955008E82FA /* TOSMBSessionTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionTask.h; sourceTree = "<group>"; };
 		E82FE02F1DD91955008E82FA /* TOSMBSessionTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOSMBSessionTask.m; sourceTree = "<group>"; };
 		E82FE0321DD91C46008E82FA /* TOSMBSessionTaskPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionTaskPrivate.h; sourceTree = "<group>"; };
@@ -328,6 +334,9 @@
 				5E391C341E27A7A800C35B01 /* TOSMBSessionRemoveTask.h */,
 				5E391C351E27A7A800C35B01 /* TOSMBSessionRemoveTask.m */,
 				5E7BF3841E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h */,
+				5E7BF3861E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.h */,
+				5E7BF3871E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.m */,
+				5E7BF38A1E27B261000E0AA0 /* TOSMBSessionCreateFolderTaskPrivate.h */,
 			);
 			name = Tasks;
 			sourceTree = "<group>";
@@ -352,6 +361,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				E8431A081DCD53DD0007BCFA /* TOSMBSessionUploadTask.h in Headers */,
+				5E7BF3881E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.h in Headers */,
+				5E7BF38B1E27B261000E0AA0 /* TOSMBSessionCreateFolderTaskPrivate.h in Headers */,
 				227D6F4C1CBD4EF4000E8A78 /* TOSMBClient.h in Headers */,
 				227D6F241CBD4ACA000E8A78 /* TOSMBConstants.h in Headers */,
 				229EC87D1CF3240B0007FE4A /* smb_session.h in Headers */,
@@ -559,6 +570,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				224899531DC0A642006CA7B3 /* TOSMBConstants.m in Sources */,
+				5E7BF3891E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.m in Sources */,
 				E82FE0311DD91955008E82FA /* TOSMBSessionTask.m in Sources */,
 				224899551DC0A642006CA7B3 /* TONetBIOSNameService.m in Sources */,
 				224899571DC0A642006CA7B3 /* TONetBIOSNameServiceEntry.m in Sources */,

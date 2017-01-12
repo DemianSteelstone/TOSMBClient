@@ -31,6 +31,7 @@
 #import "TOSMBSessionPrivate.h"
 #import "smb_defs.h"
 #import "smb_file.h"
+#import "smb_dir.h"
 #import "smb_session.h"
 #import "smb_share.h"
 

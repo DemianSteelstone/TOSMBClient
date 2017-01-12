@@ -1,28 +1,27 @@
 //
-//  TOSMBSessionRemoveTask.m
+//  TOSMBSessionCreateFolderTask.m
 //  TOSMBClient
 //
 //  Created by Demian Steelstone on 12.01.17.
 //  Copyright © 2017 TimOliver. All rights reserved.
 //
 
-#import "TOSMBSessionRemoveTaskPrivate.h"
+#import "TOSMBSessionCreateFolderTaskPrivate.h"
 
-@interface TOSMBSessionRemoveTask ()
+@interface TOSMBSessionCreateFolderTask ()
 
-@property (nonatomic,copy) dispatch_block_t successHandler;
+@property (nonatomic,copy) TOSSMBSessionCreateFolderTaskSuccessBlock successHandler;
 
-@property (nonatomic, weak) id <TOSMBSessionRemoveTaskDelegate> delegate;
+@property (nonatomic, weak) id <TOSMBSessionCreateFolderTaskDelegate> delegate;
 
 @end
 
-@implementation TOSMBSessionRemoveTask
-
+@implementation TOSMBSessionCreateFolderTask
 @dynamic delegate;
 
 -(instancetype)initWithSession:(TOSMBSession *)session
                     sourcePath:(NSString *)srcPath
-                      delegate:(id<TOSMBSessionRemoveTaskDelegate>)delegate
+                      delegate:(id<TOSMBSessionCreateFolderTaskDelegate>)delegate
 {
     self = [super initWithSession:session path:srcPath];
     self.delegate = delegate;
@@ -31,7 +30,7 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session
                     sourcePath:(NSString *)srcPath
-                successHandler:(dispatch_block_t)successHandler
+                successHandler:(TOSSMBSessionCreateFolderTaskSuccessBlock)successHandler
                    failHandler:(TOSMBSessionTaskFailBlock)failHandler
 {
     self = [super initWithSession:session path:srcPath];
@@ -48,28 +47,32 @@
     
     const char *fileCString = [self.formattedFilePath cStringUsingEncoding:NSUTF8StringEncoding];
     
-    int result = smb_file_rm(self.smbSession,self.treeID,fileCString);
+    int result = smb_directory_create(self.smbSession,self.treeID,fileCString);
     if (result)
     {
         [self didFailWithError:errorForErrorCode(result)];
     }
     else
     {
-        [self didFinish];
+        TOSMBSessionFile *file = [self requestFileForItemAtPath:self.smbFilePath inTree:self.treeID];
+        [self didFinishWithItem:file];
     }
     
+    self.cleanupBlock();
 }
 
-- (void)didFinish {
+- (void)didFinishWithItem:(TOSMBSessionFile *)folder {
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        if ([weakSelf.delegate respondsToSelector:@selector(removeTaskDidCompletedSuccessfull:)]) {
-            [weakSelf.delegate removeTaskDidCompletedSuccessfull:weakSelf];
+        if ([weakSelf.delegate respondsToSelector:@selector(createFolderTask:didCreateFolder:)]) {
+            [weakSelf.delegate createFolderTask:weakSelf
+                                didCreateFolder:folder];
         }
         if (weakSelf.successHandler) {
-            weakSelf.successHandler();
+            weakSelf.successHandler(folder);
         }
     });
 }
+
 
 @end

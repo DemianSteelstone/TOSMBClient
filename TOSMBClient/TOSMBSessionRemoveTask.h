@@ -11,7 +11,7 @@
 @protocol TOSMBSessionRemoveTaskDelegate <TOSMBSessionTaskDelegate>
 @optional
 
-- (void)taskDidCompletedSuccessfull:(TOSMBSessionTask *)task;
+- (void)removeTaskDidCompletedSuccessfull:(TOSMBSessionTask *)task;
 
 @end
 
