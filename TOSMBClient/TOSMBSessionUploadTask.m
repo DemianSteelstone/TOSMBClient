@@ -144,7 +144,7 @@
                     ssize_t bytesWritten = 0;
                     ssize_t totalBytesWritten = 0;
                     
-                    while ((data = [self.sourceFilehandle readDataOfLength: chunkSize]) != nil)
+                    while ((data = [self.sourceFilehandle readDataOfLength: chunkSize]).length != 0)
                     {
                         NSUInteger bufferSize = data.length;
                         void *buffer = malloc(bufferSize);
