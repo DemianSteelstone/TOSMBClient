@@ -139,7 +139,7 @@
                 if (success)
                 {
                     NSData *data;
-                    NSInteger chunkSize = 1024 * 1024;
+                    NSInteger chunkSize = 65471;
                     
                     ssize_t bytesWritten = 0;
                     ssize_t totalBytesWritten = 0;
@@ -152,11 +152,10 @@
                         void *buffer = malloc(bufferSize);
                         [data getBytes:buffer length:bufferSize];
                         
-                        bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, MIN(bufferSize,65471));
+                        bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, bufferSize);
                         
                         free(buffer);
                         totalBytesWritten += bytesWritten;
-                        smb_fseek(self.smbSession, fileID, totalBytesWritten, SMB_SEEK_SET);
                         [self didSendBytes:bytesWritten bytesSent:totalBytesWritten];
                     }
                     
