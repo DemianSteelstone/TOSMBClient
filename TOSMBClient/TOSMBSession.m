@@ -241,6 +241,14 @@
 
 - (TOSMBSessionFile *)fetchFileAtPath:(NSString *)path error:(NSError **)error
 {
+    NSError *connectionError = [self attemptConnection];
+    if (connectionError)
+    {
+        if (error)
+            *error = connectionError;
+        return nil;
+    }
+
     NSString *fixedPath = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
     NSString *shareName = [self shareNameFromPath:fixedPath];
 
