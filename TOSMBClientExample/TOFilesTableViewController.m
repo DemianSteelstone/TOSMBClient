@@ -53,7 +53,7 @@
     [data writeToFile:dataPath atomically:YES];
     
     __weak typeof(self) weakSelf = self;
-    self.uploadTask = [self.session uploadTaskForSurceFilePath:dataPath destinationPath:path progressHandler:nil completionHandler:^{
+    self.uploadTask = [self.session uploadTaskForSurceFilePath:dataPath destinationPath:path progressHandler:nil completionHandler:^(TOSMBSessionFile *file){
         [weakSelf reloadData];
         weakSelf.navigationItem.rightBarButtonItems.lastObject.enabled = YES;
     } failHandler:^(NSError *error) {

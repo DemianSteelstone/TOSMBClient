@@ -33,7 +33,7 @@
 @property (nonatomic, strong) TOSMBSessionFile *file;
 
 @property (nonatomic, weak) id <TOSMBSessionUploadTaskDelegate> delegate;
-@property (nonatomic, copy) void (^successHandler)();
+@property (nonatomic, copy) void (^successHandler)(TOSMBSessionFile *file);
 
 @end
 
@@ -89,8 +89,11 @@
 - (void)didSendBytes:(NSInteger)recentCount bytesSent:(NSInteger)totalCount {
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        if ([weakSelf.delegate respondsToSelector:@selector(uploadTaskForFileAtPath:data:progressHandler:completionHandler:failHandler:)]) {
-            [weakSelf.delegate uploadTask:self didSendBytes:recentCount totalBytesSent:totalCount totalBytesExpectedToSend:weakSelf.fileSize];
+        if ([weakSelf.delegate respondsToSelector:@selector(uploadTask:didSendBytes:totalBytesSent:totalBytesExpectedToSend:)]) {
+            [weakSelf.delegate uploadTask:weakSelf
+                             didSendBytes:recentCount
+                           totalBytesSent:totalCount
+                 totalBytesExpectedToSend:weakSelf.fileSize];
         }
         if (weakSelf.progressHandler) {
             weakSelf.progressHandler(totalCount, weakSelf.fileSize);
@@ -102,10 +105,10 @@
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([weakSelf.delegate respondsToSelector:@selector(uploadTaskDidFinishUploading:)]) {
-            [weakSelf.delegate uploadTaskDidFinishUploading:self];
+            [weakSelf.delegate uploadTaskDidFinishUploading:self.file];
         }
         if (weakSelf.successHandler) {
-            weakSelf.successHandler();
+            weakSelf.successHandler(self.file);
         }
     });
 }
@@ -153,6 +156,8 @@
                         [self didSendBytes:bytesWritten bytesSent:totalBytesWritten];
                     }
                     
+                    // Get uploaded file info
+                    success = [self findTargetFile:treeID operation:weakOperation];
                     [self didFinish];
                 }
             }

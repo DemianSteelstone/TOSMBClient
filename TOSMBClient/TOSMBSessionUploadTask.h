@@ -22,12 +22,12 @@
 
 #import "TOSMBSessionTask.h"
 
-@class TOSMBSessionUploadTask;
+@class TOSMBSessionUploadTask,TOSMBSessionFile;
 
 @protocol TOSMBSessionUploadTaskDelegate <TOSMBSessionTaskDelegate>
 @optional
 
-- (void)uploadTaskDidFinishUploading:(TOSMBSessionUploadTask *)task;
+- (void)uploadTaskDidFinishUploading:(TOSMBSessionFile *)file;
 
 - (void)uploadTask:(TOSMBSessionUploadTask *)task
       didSendBytes:(uint64_t)bytesSent
