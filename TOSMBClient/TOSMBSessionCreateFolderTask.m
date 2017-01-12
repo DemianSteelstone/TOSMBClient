@@ -31,7 +31,7 @@
                     sourcePath:(NSString *)srcPath
                       delegate:(id<TOSMBSessionCreateFolderTaskDelegate>)delegate
 {
-    self = [super initWithSession:session path:srcPath];
+    self = [self initWithSession:session path:srcPath];
     self.delegate = delegate;
     return self;
 }
@@ -41,7 +41,7 @@
                 successHandler:(TOSSMBSessionCreateFolderTaskSuccessBlock)successHandler
                    failHandler:(TOSMBSessionTaskFailBlock)failHandler
 {
-    self = [super initWithSession:session path:srcPath];
+    self = [self initWithSession:session path:srcPath];
     self.successHandler = successHandler;
     self.failHandler = failHandler;
     return self;
