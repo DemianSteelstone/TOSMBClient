@@ -51,7 +51,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) smb_tid treeID;
 @property (nonatomic) smb_fd fileID;
+
 @property (nonatomic) BOOL isNewFile;
+@property (nonatomic) BOOL dontOpenFile;
 
 @property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskIdentifier;
 

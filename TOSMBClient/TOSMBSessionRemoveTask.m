@@ -20,6 +20,13 @@
 
 @dynamic delegate;
 
+-(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
+{
+    self = [super initWithSession:session path:smbPath];
+    self.dontOpenFile = YES;
+    return self;
+}
+
 -(instancetype)initWithSession:(TOSMBSession *)session
                     sourcePath:(NSString *)srcPath
                       delegate:(id<TOSMBSessionRemoveTaskDelegate>)delegate

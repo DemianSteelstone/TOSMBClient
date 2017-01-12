@@ -174,6 +174,9 @@
 
 -(BOOL)openFileWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
 {
+    if (self.dontOpenFile)
+        return YES;
+    
     smb_fd fileID = 0;;
     //Open the file handle
     smb_fopen(self.smbSession, self.treeID, [self.formattedFilePath cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
