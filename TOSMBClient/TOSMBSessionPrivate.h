@@ -25,6 +25,7 @@
 
 #import "TOSMBSession.h"
 #import "smb_session.h"
+#import "smb_share.h"
 
 @interface TOSMBSession ()
 

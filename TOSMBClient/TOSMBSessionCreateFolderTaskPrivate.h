@@ -12,7 +12,7 @@
 #import "TOSMBSessionCreateFolderTask.h"
 #import "TOSMBSessionTaskPrivate.h"
 
-typedef void(^TOSSMBSessionCreateFolderTaskSuccessBlock)(TOSMBSessionFile *folder);
+
 
 @interface TOSMBSessionCreateFolderTask ()
 

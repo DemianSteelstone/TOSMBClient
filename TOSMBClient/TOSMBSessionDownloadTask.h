@@ -26,6 +26,8 @@
 @class TOSMBSession;
 @class TOSMBSessionDownloadTask;
 
+typedef void(^TOSMBSessionDownloadTaskSuccsessBlock)(NSString *path);
+
 @protocol TOSMBSessionDownloadTaskDelegate <TOSMBSessionTaskDelegate>
 
 @optional

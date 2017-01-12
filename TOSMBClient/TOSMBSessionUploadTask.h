@@ -24,6 +24,8 @@
 
 @class TOSMBSessionUploadTask,TOSMBSessionFile;
 
+typedef void(^TOSMBSessionUploadTaskSuccessBlock)(TOSMBSessionFile *file);
+
 @protocol TOSMBSessionUploadTaskDelegate <TOSMBSessionTaskDelegate>
 @optional
 

@@ -27,6 +27,9 @@
 @class TOSMBSessionTask;
 @class TOSMBSession;
 
+typedef void(^TOSMBSessionTaskProgressBlock)(uint64_t totalBytesWritten, uint64_t totalBytesExpected);
+typedef void(^TOSMBSessionTaskFailBlock)(NSError *error);
+
 @protocol TOSMBSessionTaskDelegate <NSObject>
 @optional
 /**

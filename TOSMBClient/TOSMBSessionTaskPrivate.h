@@ -37,9 +37,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void(^TOSMBSessionTaskProgressBlock)(uint64_t totalBytesWritten, uint64_t totalBytesExpected);
-typedef void(^TOSMBSessionTaskFailBlock)(NSError *error);
-
 @protocol TOSMBSessionConcreteTask <NSObject>
 
 - (void)performTaskWithOperation:(__weak NSBlockOperation *)weakOperation;

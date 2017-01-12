@@ -27,8 +27,6 @@
 #import "TOSMBSessionUploadTask.h"
 #import "TOSMBSessionTaskPrivate.h"
 
-typedef void(^TOSMBSessionUploadTaskSuccessBlock)(TOSMBSessionFile *file);
-
 @interface TOSMBSessionUploadTask () <TOSMBSessionConcreteTask>
 
 - (instancetype)initWithSession:(TOSMBSession *)session

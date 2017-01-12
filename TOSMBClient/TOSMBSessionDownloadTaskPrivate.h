@@ -27,8 +27,6 @@
 #import "TOSMBSessionTaskPrivate.h"
 #import "TOSMBSession.h"
 
-typedef void(^TOSMBSessionDownloadTaskSuccsessBlock)(NSString *path);
-
 @interface TOSMBSessionDownloadTask () <TOSMBSessionConcreteTask>
 
 - (instancetype)initWithSession:(TOSMBSession *)session

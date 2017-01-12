@@ -10,6 +10,8 @@
 
 @class TOSMBSessionFile;
 
+typedef void(^TOSSMBSessionCreateFolderTaskSuccessBlock)(TOSMBSessionFile *folder);
+
 @protocol TOSMBSessionCreateFolderTaskDelegate <TOSMBSessionTaskDelegate>
 @optional
 

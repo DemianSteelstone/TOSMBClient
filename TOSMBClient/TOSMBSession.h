@@ -24,8 +24,11 @@
 #import "TOSMBConstants.h"
 
 @class TOSMBSessionFile;
-@class TOSMBSessionDownloadTask;
-@class TOSMBSessionUploadTask;
+
+#import "TOSMBSessionDownloadTask.h"
+#import "TOSMBSessionUploadTask.h"
+#import "TOSMBSessionRemoveTask.h"
+#import "TOSMBSessionCreateFolderTask.h"
 
 @protocol TOSMBSessionDownloadTaskDelegate;
 
@@ -114,7 +117,9 @@
  
  @return A download task object ready to be started, or nil upon failure.
  */
-- (TOSMBSessionDownloadTask *)downloadTaskForFileAtPath:(NSString *)path destinationPath:(NSString *)destinationPath delegate:(id <TOSMBSessionDownloadTaskDelegate>)delegate;
+- (TOSMBSessionDownloadTask *)downloadTaskForFileAtPath:(NSString *)path
+                                        destinationPath:(NSString *)destinationPath
+                                               delegate:(id <TOSMBSessionDownloadTaskDelegate>)delegate;
 
 /**
  Same as above, creates a download task object for asynchronously downloading a file to disk.
@@ -129,9 +134,9 @@
  */
 - (TOSMBSessionDownloadTask *)downloadTaskForFileAtPath:(NSString *)path
                                         destinationPath:(NSString *)destinationPath
-                                        progressHandler:(void (^)(uint64_t totalBytesWritten, uint64_t totalBytesExpected))progressHandler
-                                      completionHandler:(void (^)(NSString *filePath))completionHandler
-                                            failHandler:(void (^)(NSError *error))failHandler;
+                                        progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
+                                      completionHandler:(TOSMBSessionDownloadTaskSuccsessBlock)completionHandler
+                                            failHandler:(TOSMBSessionTaskFailBlock)failHandler;
 /**
  Creates an upload task object for asynchronously uploading a file to disk.
  
@@ -144,9 +149,23 @@
  */
 - (TOSMBSessionUploadTask *)uploadTaskForSurceFilePath:(NSString *)srcPath
                                        destinationPath:(NSString *)dstPath
-                                       progressHandler:(void (^)(uint64_t, uint64_t))progressHandler
-                                     completionHandler:(void (^)(TOSMBSessionFile *file))completionHandler
-                                           failHandler:(void (^)(NSError *))failHandler;
+                                       progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
+                                     completionHandler:(TOSMBSessionUploadTaskSuccessBlock)completionHandler
+                                           failHandler:(TOSMBSessionTaskFailBlock)failHandler;
+/**
+ 
+ */
+-(TOSMBSessionRemoveTask *)removeTaskForItem:(NSString *)itemPath
+                           completionHandler:(dispatch_block_t)completionHandler
+                                 failHandler:(TOSMBSessionTaskFailBlock)failHandler;
+
+/**
+ 
+ */
+
+-(TOSMBSessionCreateFolderTask *)createFolderAtPath:(NSString *)itemPath
+                                  completionHandler:(TOSSMBSessionCreateFolderTaskSuccessBlock)completionHandler
+                                        failHandler:(TOSMBSessionTaskFailBlock)failHandler;
 
 @end
 
