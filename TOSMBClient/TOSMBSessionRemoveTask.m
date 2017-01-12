@@ -48,7 +48,17 @@
     
     const char *fileCString = [self.formattedFilePath cStringUsingEncoding:NSUTF8StringEncoding];
     
-    int result = smb_file_rm(self.smbSession,self.treeID,fileCString);
+    int result = 0;
+    
+    if (self.file.directory)
+    {
+        result = smb_directory_rm(self.smbSession,self.treeID,fileCString);
+    }
+    else
+    {
+        result = smb_file_rm(self.smbSession,self.treeID,fileCString);
+    }
+    
     if (result)
     {
         [self didFailWithError:errorForErrorCode(result)];
@@ -57,7 +67,6 @@
     {
         [self didFinish];
     }
-    
 }
 
 - (void)didFinish {
