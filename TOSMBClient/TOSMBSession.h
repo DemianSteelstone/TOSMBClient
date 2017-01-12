@@ -23,6 +23,7 @@
 #import <Foundation/Foundation.h>
 #import "TOSMBConstants.h"
 
+@class TOSMBSessionFile;
 @class TOSMBSessionDownloadTask;
 @class TOSMBSessionUploadTask;
 
@@ -72,6 +73,8 @@
  @param password The login password
  */
 - (void)setLoginCredentialsWithUserName:(NSString *)userName password:(NSString *)password;
+
+- (TOSMBSessionFile *)fetchFileAtPath:(NSString *)path error:(NSError **)error;
 
 /**
  Performs a synchronous request for a list of files from the network device for the given file path.
