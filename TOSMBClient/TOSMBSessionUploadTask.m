@@ -152,7 +152,7 @@
                         void *buffer = malloc(bufferSize);
                         [data getBytes:buffer length:bufferSize];
                         
-                        bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, bufferSize);
+                        bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, MIN(bufferSize,65471));
                         free(buffer);
                         totalBytesWritten += bytesWritten;
                         [self didSendBytes:bytesWritten bytesSent:totalBytesWritten];
