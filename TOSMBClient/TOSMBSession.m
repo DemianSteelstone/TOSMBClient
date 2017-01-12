@@ -238,6 +238,41 @@
 }
 
 #pragma mark - Data Requests -
+
+- (TOSMBSessionFile *)fetchFileAtPath:(NSString *)path error:(NSError **)error
+{
+    NSString *fixedPath = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
+    NSString *shareName = [self shareNameFromPath:fixedPath];
+
+    smb_tid shareIdentifier = -1;
+    smb_tree_connect(self.session, [shareName cStringUsingEncoding:NSUTF8StringEncoding], &shareIdentifier);
+
+    if (shareIdentifier < 0)
+    {
+        if (error)
+            *error = errorForErrorCode(TOSMBSessionErrorCodeShareConnectionFailed);
+        return nil;
+    }
+
+    NSString *relativePath = [self filePathExcludingSharePathFromPath:fixedPath];
+    relativePath = [NSString stringWithFormat:@"\\%@", relativePath];
+
+    smb_stat fileStat = smb_fstat(self.session, shareIdentifier, [relativePath cStringUsingEncoding:NSUTF8StringEncoding]);
+    if (!fileStat)
+    {
+        if (error)
+            *error = errorForErrorCode(TOSMBSessionErrorCodeFileNotFound);
+        return nil;
+    }
+
+    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat session:self parentDirectoryFilePath:fixedPath];
+
+    smb_stat_destroy(fileStat);
+    smb_tree_disconnect(self.session, shareIdentifier);
+
+    return file;
+}
+
 - (NSArray *)requestContentsOfDirectoryAtFilePath:(NSString *)path error:(NSError **)error
 {
     //Attempt a connection attempt (If it has not already been done)
