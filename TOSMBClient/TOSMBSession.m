@@ -274,7 +274,7 @@
         return nil;
     }
 
-    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat session:self parentDirectoryFilePath:fixedPath];
+    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat session:self parentDirectoryFilePath:fixedPath.stringByDeletingLastPathComponent];
 
     smb_stat_destroy(fileStat);
     smb_tree_disconnect(self.session, shareIdentifier);
