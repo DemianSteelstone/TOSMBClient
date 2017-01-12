@@ -27,6 +27,8 @@
 #import "TOSMBSessionUploadTask.h"
 #import "TOSMBSessionTaskPrivate.h"
 
+typedef void(^TOSMBSessionUploadTaskSuccessBlock)(TOSMBSessionFile *file);
+
 @interface TOSMBSessionUploadTask () <TOSMBSessionConcreteTask>
 
 - (instancetype)initWithSession:(TOSMBSession *)session
@@ -37,9 +39,9 @@
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath
                         dstPath:(NSString *)dstPath
-                progressHandler:(id)progressHandler
-                 successHandler:(id)successHandler
-                    failHandler:(id)failHandler;
+                progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
+                 successHandler:(TOSMBSessionUploadTaskSuccessBlock)successHandler
+                    failHandler:(TOSMBSessionTaskFailBlock)failHandler;
 
 @end
 

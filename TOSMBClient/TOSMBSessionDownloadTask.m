@@ -40,7 +40,7 @@
 
 /** Feedback handlers */
 @property (nonatomic, weak) id<TOSMBSessionDownloadTaskDelegate> delegate;
-@property (nonatomic, copy) void (^successHandler)(NSString *filePath);
+@property (nonatomic, copy) TOSMBSessionDownloadTaskSuccsessBlock successHandler;
 
 /* File Path Methods */
 - (NSString *)hashForFilePath;
@@ -68,7 +68,10 @@
     return nil;
 }
 
-- (instancetype)initWithSession:(TOSMBSession *)session filePath:(NSString *)filePath destinationPath:(NSString *)destinationPath delegate:(id<TOSMBSessionDownloadTaskDelegate>)delegate
+- (instancetype)initWithSession:(TOSMBSession *)session
+                       filePath:(NSString *)filePath
+                destinationPath:(NSString *)destinationPath
+                       delegate:(id<TOSMBSessionDownloadTaskDelegate>)delegate
 {
     if ((self = [super initWithSession:session path:filePath])) {
         
@@ -81,7 +84,12 @@
     return self;
 }
 
-- (instancetype)initWithSession:(TOSMBSession *)session filePath:(NSString *)filePath destinationPath:(NSString *)destinationPath progressHandler:(id)progressHandler successHandler:(id)successHandler failHandler:(id)failHandler
+- (instancetype)initWithSession:(TOSMBSession *)session
+                       filePath:(NSString *)filePath
+                destinationPath:(NSString *)destinationPath
+                progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
+                 successHandler:(TOSMBSessionDownloadTaskSuccsessBlock)successHandler
+                    failHandler:(TOSMBSessionTaskFailBlock)failHandler
 {
     if (([super initWithSession:session path:filePath])) {
         self.session = session;

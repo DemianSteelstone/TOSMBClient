@@ -29,7 +29,7 @@
 @property (nonatomic) long long fileSize;
 
 @property (nonatomic, weak) id <TOSMBSessionUploadTaskDelegate> delegate;
-@property (nonatomic, copy) void (^successHandler)(TOSMBSessionFile *file);
+@property (nonatomic, copy) TOSMBSessionUploadTaskSuccessBlock successHandler;
 
 @end
 
@@ -66,9 +66,9 @@
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath
                         dstPath:(NSString *)dstPath
-                progressHandler:(id)progressHandler
-                 successHandler:(id)successHandler
-                    failHandler:(id)failHandler {
+                progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
+                 successHandler:(TOSMBSessionUploadTaskSuccessBlock)successHandler
+                    failHandler:(TOSMBSessionTaskFailBlock)failHandler {
     if ((self = [self initWithSession:session sourcePath:srcPath dstPath:dstPath])) {
         self.progressHandler = progressHandler;
         self.successHandler = successHandler;

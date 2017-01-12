@@ -27,6 +27,8 @@
 #import "TOSMBSessionTaskPrivate.h"
 #import "TOSMBSession.h"
 
+typedef void(^TOSMBSessionDownloadTaskSuccsessBlock)(NSString *path);
+
 @interface TOSMBSessionDownloadTask () <TOSMBSessionConcreteTask>
 
 - (instancetype)initWithSession:(TOSMBSession *)session
@@ -37,9 +39,9 @@
 - (instancetype)initWithSession:(TOSMBSession *)session
                        filePath:(NSString *)filePath
                 destinationPath:(NSString *)destinationPath
-                progressHandler:(id)progressHandler
-                 successHandler:(id)successHandler
-                    failHandler:(id)failHandler;
+                progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
+                 successHandler:(TOSMBSessionDownloadTaskSuccsessBlock)successHandler
+                    failHandler:(TOSMBSessionTaskFailBlock)failHandler;
 
 @end
 
