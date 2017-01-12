@@ -153,8 +153,10 @@
                         [data getBytes:buffer length:bufferSize];
                         
                         bytesWritten = smb_fwrite(self.smbSession, fileID, buffer, MIN(bufferSize,65471));
+                        
                         free(buffer);
                         totalBytesWritten += bytesWritten;
+                        smb_fseek(self.smbSession, fileID, totalBytesWritten, SMB_SEEK_SET);
                         [self didSendBytes:bytesWritten bytesSent:totalBytesWritten];
                     }
                     
