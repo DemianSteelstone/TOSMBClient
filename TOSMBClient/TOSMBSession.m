@@ -264,6 +264,7 @@
 
     NSString *relativePath = [self filePathExcludingSharePathFromPath:fixedPath];
     relativePath = [NSString stringWithFormat:@"\\%@", relativePath];
+    relativePath = [relativePath stringByReplacingOccurrencesOfString:@"/" withString:@"\\"]; //replace forward slashes with backslashes
 
     smb_stat fileStat = smb_fstat(self.session, shareIdentifier, [relativePath cStringUsingEncoding:NSUTF8StringEncoding]);
     if (!fileStat)
