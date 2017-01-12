@@ -132,18 +132,18 @@
 /**
  Creates an upload task object for asynchronously uploading a file to disk.
  
- @param path The destination path (Either just the directory, or even a new name) for this file.
- @param data The path on the SMB device for the file to download.
+ @param dstPath The destination path (Either just the directory, or even a new name) for this file.
+ @param srcPath The path on the SMB device for the file to download.
  @param completionHandler A block called once the download has completed.
  @param failHandler A block called if the download fails
  
  @return An upload task object ready to be started, or nil upon failure.
  */
-- (TOSMBSessionUploadTask *)uploadTaskForFileAtPath:(NSString *)path
-                                               data:(NSData *)data
-                                    progressHandler:(void (^)(uint64_t totalBytesWritten, uint64_t totalBytesExpected))progressHandler
-                                  completionHandler:(void (^)())completionHandler
-                                        failHandler:(void (^)(NSError *error))failHandler;
+- (TOSMBSessionUploadTask *)uploadTaskForSurceFilePath:(NSString *)srcPath
+                                       destinationPath:(NSString *)dstPath
+                                       progressHandler:(void (^)(uint64_t, uint64_t))progressHandler
+                                     completionHandler:(void (^)())completionHandler
+                                           failHandler:(void (^)(NSError *))failHandler;
 
 @end
 

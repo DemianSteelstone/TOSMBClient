@@ -30,13 +30,13 @@
 @interface TOSMBSessionUploadTask () <TOSMBSessionConcreteTask>
 
 - (instancetype)initWithSession:(TOSMBSession *)session
-                           path:(NSString *)path
-                           data:(NSData *)data
-                       delegate:(id <TOSMBSessionUploadTaskDelegate>)delegate;
+                     sourcePath:(NSString *)srcPath
+                        dstPath:(NSString *)dstPath
+                       delegate:(id<TOSMBSessionUploadTaskDelegate>)delegate;
 
 - (instancetype)initWithSession:(TOSMBSession *)session
-                           path:(NSString *)path
-                           data:(NSData *)data
+                     sourcePath:(NSString *)srcPath
+                        dstPath:(NSString *)dstPath
                 progressHandler:(id)progressHandler
                  successHandler:(id)successHandler
                     failHandler:(id)failHandler;
