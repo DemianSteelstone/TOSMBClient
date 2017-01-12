@@ -205,16 +205,19 @@
     return YES;
 }
 
--(BOOL)findTargetFile:(smb_tid)treeID fileID:(smb_fd)fileID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(NSString *)filePath
 {
-    //Find the target file
-    
     NSString *formattedPath = [self.session filePathExcludingSharePathFromPath:self.path];
     formattedPath = [NSString stringWithFormat:@"\\%@",formattedPath];
     formattedPath = [formattedPath stringByReplacingOccurrencesOfString:@"/" withString:@"\\\\"];
-    
+    return formattedPath;
+}
+
+-(BOOL)findTargetFile:(smb_tid)treeID fileID:(smb_fd)fileID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
+{
+    //Find the target file
     //Get the file info we'll be working off
-    self.file = [self requestFileForItemAtPath:formattedPath inTree:treeID];
+    self.file = [self requestFileForItemAtPath:self.filePath inTree:treeID];
     
     if (weakOperation.isCancelled) {
         self.cleanupBlock(treeID, fileID);
@@ -232,8 +235,7 @@
 -(BOOL)openFileTreeId:(smb_tid)treeID fileID:(smb_fd)fileID operation:(NSBlockOperation * _Nonnull __weak)weakOperation
 {
     //Open the file handle
-    
-    smb_fopen(self.smbSession, treeID, [self.file.filePath cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
+    smb_fopen(self.smbSession, treeID, [self.filePath cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
     if (!fileID) {
         [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
         self.cleanupBlock(treeID, fileID);

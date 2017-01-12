@@ -46,8 +46,13 @@
     NSString *path = [[self.path stringByAppendingPathComponent:[NSUUID UUID].UUIDString] stringByAppendingPathExtension:@"txt"];
     NSData *data = [path dataUsingEncoding:NSUTF8StringEncoding];
     
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0]; // Get documents folder
+    NSString *dataPath = [documentsDirectory stringByAppendingPathComponent:@"testfile.txt"];
+    [data writeToFile:dataPath atomically:YES];
+    
     __weak typeof(self) weakSelf = self;
-    self.uploadTask = [self.session uploadTaskForFileAtPath:path data:data progressHandler:nil completionHandler:^{
+    self.uploadTask = [self.session uploadTaskForSurceFilePath:dataPath destinationPath:self.path progressHandler:nil completionHandler:^{
         [weakSelf reloadData];
         weakSelf.navigationItem.rightBarButtonItems.lastObject.enabled = YES;
     } failHandler:^(NSError *error) {

@@ -410,6 +410,7 @@
 				TargetAttributes = {
 					2214DCBB1B661CD2003E3EF1 = {
 						CreatedOnToolsVersion = 6.4;
+						DevelopmentTeam = U262W94Y7T;
 					};
 					2214DCD41B661CD2003E3EF1 = {
 						CreatedOnToolsVersion = 6.4;
@@ -658,6 +659,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = U262W94Y7T;
 				INFOPLIST_FILE = TOSMBClientExample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -674,6 +676,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = U262W94Y7T;
 				INFOPLIST_FILE = TOSMBClientExample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
