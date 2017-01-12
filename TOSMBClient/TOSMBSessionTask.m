@@ -42,7 +42,7 @@
         __weak typeof(self) weakSelf = self;
         __weak NSBlockOperation *weakOperation = _taskOperation;
         [_taskOperation addExecutionBlock:^{
-            [weakSelf performTaskWithOperation:weakOperation];
+            [weakSelf prepareWithOperation:weakOperation];
         }];
         
         _taskOperation.completionBlock = ^{
