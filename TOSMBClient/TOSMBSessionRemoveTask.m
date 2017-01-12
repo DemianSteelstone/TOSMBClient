@@ -6,7 +6,7 @@
 //  Copyright © 2017 TimOliver. All rights reserved.
 //
 
-#import "TOSSMBSessionRemoveTaskPrivate.h"
+#import "TOSMBSessionRemoveTaskPrivate.h"
 
 @interface TOSMBSessionRemoveTask ()
 
@@ -17,6 +17,17 @@
 @end
 
 @implementation TOSMBSessionRemoveTask
+
+@dynamic delegate;
+
+-(instancetype)initWithSession:(TOSMBSession *)session
+                    sourcePath:(NSString *)srcPath
+                      delegate:(id<TOSMBSessionRemoveTaskDelegate>)delegate
+{
+    self = [super initWithSession:session path:srcPath];
+    self.delegate = delegate;
+    return self;
+}
 
 -(instancetype)initWithSession:(TOSMBSession *)session
                     sourcePath:(NSString *)srcPath

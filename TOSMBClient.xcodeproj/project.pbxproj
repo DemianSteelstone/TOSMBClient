@@ -70,7 +70,7 @@
 		22FA849A1DC0996900634DB7 /* TOSMBSessionFilePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 22FA84981DC0996900634DB7 /* TOSMBSessionFilePrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		5E391C361E27A7A800C35B01 /* TOSMBSessionRemoveTask.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E391C341E27A7A800C35B01 /* TOSMBSessionRemoveTask.h */; };
 		5E391C371E27A7A800C35B01 /* TOSMBSessionRemoveTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E391C351E27A7A800C35B01 /* TOSMBSessionRemoveTask.m */; };
-		5E7BF3851E27AA72000E0AA0 /* TOSSMBSessionRemoveTaskPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E7BF3841E27AA72000E0AA0 /* TOSSMBSessionRemoveTaskPrivate.h */; };
+		5E7BF3851E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E7BF3841E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h */; };
 		E82FE0301DD91955008E82FA /* TOSMBSessionTask.h in Headers */ = {isa = PBXBuildFile; fileRef = E82FE02E1DD91955008E82FA /* TOSMBSessionTask.h */; };
 		E82FE0311DD91955008E82FA /* TOSMBSessionTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E82FE02F1DD91955008E82FA /* TOSMBSessionTask.m */; };
 		E842C6BE1DDA48040017A7AD /* TOSMBSessionTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E82FE02F1DD91955008E82FA /* TOSMBSessionTask.m */; };
@@ -140,7 +140,7 @@
 		22FA84981DC0996900634DB7 /* TOSMBSessionFilePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionFilePrivate.h; sourceTree = "<group>"; };
 		5E391C341E27A7A800C35B01 /* TOSMBSessionRemoveTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionRemoveTask.h; sourceTree = "<group>"; };
 		5E391C351E27A7A800C35B01 /* TOSMBSessionRemoveTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOSMBSessionRemoveTask.m; sourceTree = "<group>"; };
-		5E7BF3841E27AA72000E0AA0 /* TOSSMBSessionRemoveTaskPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSSMBSessionRemoveTaskPrivate.h; sourceTree = "<group>"; };
+		5E7BF3841E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionRemoveTaskPrivate.h; sourceTree = "<group>"; };
 		E82FE02E1DD91955008E82FA /* TOSMBSessionTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionTask.h; sourceTree = "<group>"; };
 		E82FE02F1DD91955008E82FA /* TOSMBSessionTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOSMBSessionTask.m; sourceTree = "<group>"; };
 		E82FE0321DD91C46008E82FA /* TOSMBSessionTaskPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionTaskPrivate.h; sourceTree = "<group>"; };
@@ -327,7 +327,7 @@
 				E82FE0351DD930DA008E82FA /* TOSMBSessionUploadTaskPrivate.h */,
 				5E391C341E27A7A800C35B01 /* TOSMBSessionRemoveTask.h */,
 				5E391C351E27A7A800C35B01 /* TOSMBSessionRemoveTask.m */,
-				5E7BF3841E27AA72000E0AA0 /* TOSSMBSessionRemoveTaskPrivate.h */,
+				5E7BF3841E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h */,
 			);
 			name = Tasks;
 			sourceTree = "<group>";
@@ -369,7 +369,7 @@
 				227D6F261CBD4ACA000E8A78 /* TONetBIOSNameServiceEntry.h in Headers */,
 				E82FE0301DD91955008E82FA /* TOSMBSessionTask.h in Headers */,
 				227D6F271CBD4ACA000E8A78 /* TOSMBSession.h in Headers */,
-				5E7BF3851E27AA72000E0AA0 /* TOSSMBSessionRemoveTaskPrivate.h in Headers */,
+				5E7BF3851E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h in Headers */,
 				22FA84951DC098B700634DB7 /* TONetBIOSNameServiceEntryPrivate.h in Headers */,
 				22FA849A1DC0996900634DB7 /* TOSMBSessionFilePrivate.h in Headers */,
 				5E391C361E27A7A800C35B01 /* TOSMBSessionRemoveTask.h in Headers */,
