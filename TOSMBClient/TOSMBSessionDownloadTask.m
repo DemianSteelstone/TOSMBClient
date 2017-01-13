@@ -46,7 +46,7 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)path
 {
-    TOSMBSessionDownloadStream *stream = [TOSMBSessionDownloadStream sessionForPath:path];
+    TOSMBSessionDownloadStream *stream = [TOSMBSessionDownloadStream streamForPath:path];
     self = [super initWithSession:session stream:stream];
     return self;
 }

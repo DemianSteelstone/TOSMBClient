@@ -24,7 +24,7 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
 {
-    TOSMBSessionWriteStream *stream = [TOSMBSessionWriteStream sessionForPath:smbPath];
+    TOSMBSessionWriteStream *stream = [TOSMBSessionWriteStream streamForPath:smbPath];
     self = [super initWithSession:session stream:stream];
     return self;
 }

@@ -10,12 +10,8 @@
 
 @class TOSMBSessionFile;
 
-typedef void(^TOSMBSessionWriteStreamFolderCreateSuccessBlock)(TOSMBSessionFile *folder);
-
 @interface TOSMBSessionWriteStream : TOSMBSessionStream
 
--(void)createFolderWithSuccessBlock:(TOSMBSessionWriteStreamFolderCreateSuccessBlock)successBlock failBlock:(TOSMBSessionStreamFailBlock)failBlock;
-
--(void)removeItemWithSuccessBlock:(dispatch_block_t)successBlock failBlock:(TOSMBSessionStreamFailBlock)failBlock;
+-(void)writeData:(NSData *)data error:(NSError**)error;
 
 @end

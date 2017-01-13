@@ -9,9 +9,10 @@
 #import <UIKit/UIKit.h>
 #import "bdsm.h"
 
-typedef void(^TOSMBSessionStreamFailBlock)(NSError *error);
-
 @class TOSMBSessionFile;
+
+typedef void(^TOSMBSessionStreamFailBlock)(NSError *error);
+typedef void(^TOSMBSessionStreamFolderCreateSuccessBlock)(TOSMBSessionFile *folder);
 
 @interface TOSMBSessionStream : NSObject
 
@@ -27,11 +28,9 @@ typedef void(^TOSMBSessionStreamFailBlock)(NSError *error);
 
 @property (nonatomic, readonly) dispatch_block_t cleanupBlock;
 
-@property (nonatomic) BOOL isNewFile;
+@property (nonatomic, getter=isOpened, readonly) BOOL open;
 
-@property (nonatomic) BOOL dontCheckFolder;
-
-+ (instancetype)sessionForPath:(NSString *)path;
++ (instancetype)streamForPath:(NSString *)path;
 
 - (instancetype)initWithPath:(NSString *)path;
 
@@ -40,8 +39,17 @@ typedef void(^TOSMBSessionStreamFailBlock)(NSError *error);
 
 - (void)openStream:(dispatch_block_t)successBlock failBlock:(TOSMBSessionStreamFailBlock)failBlock;
 
+
+
+-(void)createFolderWithSuccessBlock:(TOSMBSessionStreamFolderCreateSuccessBlock)successBlock
+                          failBlock:(TOSMBSessionStreamFailBlock)failBlock;
+
+-(void)removeItemWithSuccessBlock:(dispatch_block_t)successBlock
+                        failBlock:(TOSMBSessionStreamFailBlock)failBlock;
+
+
 // Overload
-- (BOOL)findTargetFileWithOoperation:(NSBlockOperation * _Nonnull __weak)weakOperation;
-- (BOOL)openFileWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation;
+- (BOOL)findTargetFile;
+- (BOOL)openFile;
 
 @end

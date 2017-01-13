@@ -23,7 +23,7 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
 {
-    TOSMBSessionReadStream *stream = [TOSMBSessionReadStream sessionForPath:smbPath];
+    TOSMBSessionReadStream *stream = [TOSMBSessionReadStream streamForPath:smbPath];
     self = [super initWithSession:session stream:stream];
     return self;
 }

@@ -39,7 +39,7 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)path
 {
-    TOSMBSessionUploadStream *stream = [TOSMBSessionUploadStream sessionForPath:path];
+    TOSMBSessionUploadStream *stream = [TOSMBSessionUploadStream streamForPath:path];
     self = [super initWithSession:session stream:stream];
     return self;
 }
@@ -124,7 +124,9 @@
     
     [uploadStream upload:self.filePath
            progressBlock:^(uint64_t bytesWritten,uint64_t totalBytesWritten, uint64_t totalBytesExpected) {
-               [weakSelf didSendBytes:bytesWritten totalBytesSent:totalBytesWritten totalBytesExpectedToSend:totalBytesExpected];
+               [weakSelf didSendBytes:bytesWritten
+                       totalBytesSent:totalBytesWritten
+             totalBytesExpectedToSend:totalBytesExpected];
     } successBlock:^(TOSMBSessionFile *item) {
         [weakSelf didFinishWithItem:item];
     } failBlock:^(NSError *error) {

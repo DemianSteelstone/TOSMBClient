@@ -42,9 +42,34 @@
     self.cleanupBlock();
 }
 
+-(NSData *)readChunk:(NSError *__autoreleasing *)error
+{
+    int64_t bytesRead = 0;
+    NSInteger bufferSize = 65535;
+    char *buffer = malloc(bufferSize);
+    
+    @try {
+        bytesRead = smb_fread(self.smbSession, self.fileID, buffer, bufferSize);
+    } @catch (NSException *exception) {
+        *error = errorForErrorCode(TOSMBSessionErrorCodeUnknown);
+        
+    } @finally {
+        if (bytesRead < 0)
+        {
+            *error = errorForErrorCode(TOSMBSessionErrorCodeFileDownloadFailed);
+        }
+    }
+
+    free(buffer);
+    
+    if (*error)
+        return nil;
+    return [NSData dataWithBytes:buffer length:(NSUInteger)bytesRead];
+}
+
 #pragma mark -
 
--(BOOL)findTargetFileWithOoperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)findTargetFile
 {
     //Find the target file
     //Get the file info we'll be working off
@@ -57,15 +82,10 @@
         return NO;
     }
     
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock();
-        return NO;
-    }
-    
     return YES;
 }
 
--(BOOL)openFileWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)openFile
 {
     smb_fd fileID = 0;;
     //Open the file handle
@@ -77,11 +97,6 @@
     }
     
     self.fileID = fileID;
-    
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock();
-        return NO;
-    }
     return YES;
 }
 

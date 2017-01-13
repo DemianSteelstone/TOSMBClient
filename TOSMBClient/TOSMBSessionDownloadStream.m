@@ -20,65 +20,59 @@
                       failBlock:(TOSMBSessionStreamFailBlock)failBlock
 {
     int64_t bytesRead = 0;
-    NSInteger bufferSize = 65535;
     uint64_t totalBytesRead = 0;
-    char *buffer = malloc(bufferSize);
     
-    dispatch_block_t finishBlock = ^{
-        free(buffer);
-        [fileHandle closeFile];
-        self.cleanupBlock();
-    };
-    
-    TOSMBSessionStreamFailBlock errorBlock = ^(NSError *error){
-        if (failBlock)
-        {
-            failBlock(error);
-        }
-        finishBlock();
-    };
+    NSError *error = nil;
     
     do {
-        //Read the bytes from the network device
-        @try {
-            bytesRead = smb_fread(self.smbSession, self.fileID, buffer, bufferSize);
-        } @catch (NSException *exception) {
-            errorBlock(errorForErrorCode(TOSMBSessionErrorCodeUnknown));
-            return;
-        } @finally {
-            if (bytesRead < 0)
-            {
-                errorBlock(errorForErrorCode(TOSMBSessionErrorCodeFileDownloadFailed));
-                return;
-            }
+        NSData *data = [self readChunk:&error];
+        
+        if (error)
+        {
+            break;
+        }
+        else
+        {
+            bytesRead = data.length;
+            totalBytesRead += bytesRead;
+            
             //Save them to the file handle (And ensure the NSData object is flushed immediately)
-            [fileHandle writeData:[NSData dataWithBytes:buffer length:(NSUInteger)bytesRead]];
+            [fileHandle writeData:data];
             
             //Ensure the data is properly written to disk before proceeding
             [fileHandle synchronizeFile];
-            
-            totalBytesRead += bytesRead;
             
             if (progressBlock)
             {
                 progressBlock(bytesRead,totalBytesRead,self.file.fileSize);
             }
-            
         }
     } while (bytesRead > 0);
     
-    finishBlock();
+    [fileHandle closeFile];
     
-    if (successBlock)
+    if (error)
     {
-        successBlock();
+        if (failBlock)
+        {
+            failBlock(error);
+        }
     }
+    else
+    {
+        if (successBlock)
+        {
+            successBlock();
+        }
+    }
+    
+    self.cleanupBlock();
 }
 
 #pragma mark -
--(BOOL)findTargetFileWithOoperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)findTargetFile
 {
-    BOOL success = [super findTargetFileWithOoperation:weakOperation];
+    BOOL success = [super findTargetFile];
     
     if (success && self.file.directory) {
         [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeDirectoryDownloaded)];

@@ -16,60 +16,55 @@
 
 #pragma mark -
 
--(void)createFolderWithSuccessBlock:(TOSMBSessionWriteStreamFolderCreateSuccessBlock)successBlock failBlock:(TOSMBSessionStreamFailBlock)failBlock
+-(void)writeData:(NSData *)data error:(NSError**)error
 {
-    NSString *path = [self.path formattedFilePath];
-    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
+    ssize_t bytesWritten = 0;
+    NSUInteger bufferSize = data.length;
+    void *buffer = malloc(bufferSize);
+    [data getBytes:buffer length:bufferSize];
     
-    int result = smb_directory_create(self.smbSession,self.treeID,fileCString);
-    if (result)
-    {
-        if (failBlock)
-            failBlock(errorForErrorCode(result));
+    @try {
+        bytesWritten = smb_fwrite(self.smbSession, self.fileID, buffer, bufferSize);
     }
-    else
-    {
-        TOSMBSessionFile *file = [self requestFileForItemAtPath:self.path
-                                                         inTree:self.treeID];
-        if (successBlock)
-            successBlock(file);
-    }
-    
-    self.cleanupBlock();
-}
-
--(void)removeItemWithSuccessBlock:(dispatch_block_t)successBlock failBlock:(TOSMBSessionStreamFailBlock)failBlock
-{
-    NSString *path = [self.path formattedFilePath];
-    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
-    
-    int result = 0;
-    
-    if (self.file.directory)
-    {
-        result = smb_directory_rm(self.smbSession,self.treeID,fileCString);
-    }
-    else
-    {
-        result = smb_file_rm(self.smbSession,self.treeID,fileCString);
+    @catch (NSException *exception) {
+        free(buffer);
+        
+        *error = errorForErrorCode(TOSMBSessionErrorCodeUnknown);
+    } @finally {
+        
+        if (bytesWritten < 0)
+        {
+            *error = errorForErrorCode(bytesWritten);
+        }
     }
     
-    if (result)
-    {
-        if (failBlock)
-            failBlock(errorForErrorCode(result));
-    }
-    else
-    {
-        if (successBlock)
-            successBlock();
-    }
-    self.cleanupBlock();
+    free(buffer);
 }
 
 #pragma mark -
--(BOOL)openFileWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)findTargetFile
 {
+    //Find the target file
+    //Get the file info we'll be working off
+    NSString *path = [self.path formattedFilePath];
+    self.file = [self requestFileForItemAtPath:path inTree:self.treeID];
+    
+    return YES;
+}
+
+-(BOOL)openFile
+{
+    smb_fd fileID = 0;;
+    //Open the file handle
+    NSString *path = [self.path formattedFilePath];
+    smb_fopen(self.smbSession, self.treeID, [path cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
+    if (!fileID) {
+        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
+        return NO;
+    }
+    
+    self.fileID = fileID;
+    
     return YES;
 }
 

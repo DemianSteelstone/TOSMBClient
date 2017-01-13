@@ -81,7 +81,80 @@
 
 #pragma mark -
 
--(BOOL)connectToShareWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(void)createFolderWithSuccessBlock:(TOSMBSessionStreamFolderCreateSuccessBlock)successBlock
+                          failBlock:(TOSMBSessionStreamFailBlock)failBlock
+{
+    NSString *path = [self.path formattedFilePath];
+    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
+    
+    int result = smb_directory_create(self.smbSession,self.treeID,fileCString);
+    if (result)
+    {
+        if (failBlock)
+            failBlock(errorForErrorCode(result));
+    }
+    else
+    {
+        TOSMBSessionFile *file = [self requestFileForItemAtPath:self.path
+                                                         inTree:self.treeID];
+        if (successBlock)
+            successBlock(file);
+    }
+    
+    self.cleanupBlock();
+}
+
+-(void)removeItemWithSuccessBlock:(dispatch_block_t)successBlock
+                        failBlock:(TOSMBSessionStreamFailBlock)failBlock
+{
+    NSString *path = [self.path formattedFilePath];
+    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
+    
+    int result = 0;
+    
+    if (self.file.directory)
+    {
+        result = smb_directory_rm(self.smbSession,self.treeID,fileCString);
+    }
+    else
+    {
+        result = smb_file_rm(self.smbSession,self.treeID,fileCString);
+    }
+    
+    if (result)
+    {
+        if (failBlock)
+            failBlock(errorForErrorCode(result));
+    }
+    else
+    {
+        if (successBlock)
+            successBlock();
+    }
+    self.cleanupBlock();
+}
+
+#pragma mark -
+
+-(void)openStream:(dispatch_block_t)successBlock failBlock:(TOSMBSessionStreamFailBlock)failBlock
+{
+    self.failHandler = failBlock;
+    if ([self connectToShare])
+    {
+        if ([self findTargetFile])
+        {
+            if ([self openFile])
+            {
+                _open = YES;
+                if (successBlock)
+                    successBlock();
+            }
+        }
+    }
+}
+
+//-(BOOL)connectToShareWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)connectToShare
 {
     //Connect to share
     
@@ -98,23 +171,22 @@
     
     self.treeID = treeID;
     
-    if (weakOperation.isCancelled) {
-        self.cleanupBlock();
-        return NO;
-    }
+//    if (weakOperation.isCancelled) {
+//        self.cleanupBlock();
+//        return NO;
+//    }
     
     return YES;
 }
 
--(BOOL)findTargetFileWithOoperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)findTargetFile
 {
     return YES;
 }
 
--(BOOL)openFileWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(BOOL)openFile
 {
-    [self doesNotRecognizeSelector:_cmd];
-    return NO;
+    return YES;
 }
 
 - (void)didFailWithError:(NSError *)error
