@@ -13,13 +13,13 @@ static const uint64_t TOSMBSessionStreamChunkSize = 65471;
 
 @class TOSMBSessionFile;
 
-typedef void(^TOSMBSessionStreamFailBlock)(NSError *error);
-typedef void(^TOSMBSessionStreamFolderCreateSuccessBlock)(TOSMBSessionFile *folder);
+typedef void(^TOSMBSessionStreamFailBlock)( NSError* _Nonnull error);
+typedef void(^TOSMBSessionStreamFolderCreateSuccessBlock)( TOSMBSessionFile * _Nonnull folder);
 
 @interface TOSMBSessionStream : NSObject
 
-@property (nonatomic, strong) TOSMBSessionFile *file;
-@property (readonly) NSString *path;
+@property (nonatomic, strong, nullable) TOSMBSessionFile *file;
+@property (nonnull,readonly) NSString *path;
 
 
 @property (nonatomic) smb_tid treeID;
@@ -28,30 +28,37 @@ typedef void(^TOSMBSessionStreamFolderCreateSuccessBlock)(TOSMBSessionFile *fold
 
 @property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskIdentifier;
 
-@property (nonatomic, readonly) dispatch_block_t cleanupBlock;
+@property (nonatomic, readonly, nonnull) dispatch_block_t cleanupBlock;
 
-@property (nonatomic, getter=isOpened, readonly) BOOL open;
+@property (nonatomic, getter=isOpened, readonly) BOOL opened;
+@property (nonatomic, getter=isClosed, readonly) BOOL closed;
 
-+ (instancetype)streamForPath:(NSString *)path;
++ (_Nonnull instancetype)streamForPath:(NSString * _Nonnull )path;
 
-- (instancetype)initWithPath:(NSString *)path;
+- (_Nonnull instancetype)initWithPath:(NSString * _Nonnull )path;
 
-- (TOSMBSessionFile *)requestFileForItemAtPath:(NSString *)filePath inTree:(smb_tid)treeID;
-- (void)didFailWithError:(NSError *)error;
+- (nullable TOSMBSessionFile *)requestContent;
 
-- (void)openStream:(dispatch_block_t)successBlock failBlock:(TOSMBSessionStreamFailBlock)failBlock;
+- (nullable TOSMBSessionFile *)requestFileForItemAtPath:(NSString * _Nonnull )filePath
+                                                 inTree:(smb_tid)treeID;
+- (void)didFailWithError:(nonnull NSError *)error;
+
+- (void)openStream:(_Nullable dispatch_block_t)successBlock
+         failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
 
 
 
--(void)createFolderWithSuccessBlock:(TOSMBSessionStreamFolderCreateSuccessBlock)successBlock
-                          failBlock:(TOSMBSessionStreamFailBlock)failBlock;
+-(void)createFolderWithSuccessBlock:(_Nullable TOSMBSessionStreamFolderCreateSuccessBlock)successBlock
+                          failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
 
--(void)removeItemWithSuccessBlock:(dispatch_block_t)successBlock
-                        failBlock:(TOSMBSessionStreamFailBlock)failBlock;
+-(void)removeItemWithSuccessBlock:(_Nullable dispatch_block_t)successBlock
+                        failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
 
 
 // Overload
 - (BOOL)findTargetFile;
 - (BOOL)openFile;
+
+- (void)close;
 
 @end

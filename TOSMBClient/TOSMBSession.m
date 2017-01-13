@@ -34,6 +34,8 @@
 #import "TOSMBSessionRemoveTaskPrivate.h"
 #import "TOSMBSessionCreateFolderTaskPrivate.h"
 
+#import "NSString+SMBNames.h"
+
 @interface TOSMBSession ()
 
 /* The session pointer responsible for this object. */
@@ -58,10 +60,6 @@
 - (BOOL)deviceIsOnWiFi;
 - (NSError *)attemptConnection; //Attempt connection for ourselves
 - (NSError *)attemptConnectionWithSessionPointer:(smb_session *)session; //Attempt connection on behalf of concurrent download sessions
-
-/* File path parsing */
-- (NSString *)shareNameFromPath:(NSString *)path;
-- (NSString *)filePathExcludingSharePathFromPath:(NSString *)path;
 
 @end
 
@@ -250,7 +248,7 @@
     }
 
     NSString *fixedPath = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
-    NSString *shareName = [self shareNameFromPath:fixedPath];
+    NSString *shareName = [fixedPath shareName];
 
     smb_tid shareIdentifier = -1;
     smb_tree_connect(self.session, [shareName cStringUsingEncoding:NSUTF8StringEncoding], &shareIdentifier);
@@ -262,7 +260,7 @@
         return nil;
     }
 
-    NSString *relativePath = [self filePathExcludingSharePathFromPath:fixedPath];
+    NSString *relativePath = [fixedPath stringByExcludingSharePath];
     relativePath = [NSString stringWithFormat:@"\\%@", relativePath];
     relativePath = [relativePath stringByReplacingOccurrencesOfString:@"/" withString:@"\\"]; //replace forward slashes with backslashes
 
@@ -327,7 +325,7 @@
     path = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
     
     //Work out just the share name from the path (The first directory in the string)
-    NSString *shareName = [self shareNameFromPath:path];
+    NSString *shareName = [path shareName];
     
     //Connect to that share
     //If not, make a new connection
@@ -344,7 +342,7 @@
     }
     
     //work out the remainder of the file path and create the search query
-    NSString *relativePath = [self filePathExcludingSharePathFromPath:path];
+    NSString *relativePath = [path stringByExcludingSharePath];
     //prepend double backslashes
     relativePath = [NSString stringWithFormat:@"\\%@",relativePath];
     //replace any additional forward slashes with backslashes

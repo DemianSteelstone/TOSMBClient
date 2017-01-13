@@ -121,8 +121,7 @@
     }
     else
     {
-        TOSMBSessionFile *file = [self.writeStream requestFileForItemAtPath:self.writeStream.path
-                                                                     inTree:self.writeStream.treeID];
+        TOSMBSessionFile *file = [self.writeStream requestContent];
         [self didFinishWithItem:file];
     }
 }

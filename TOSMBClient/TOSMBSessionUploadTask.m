@@ -151,8 +151,7 @@
     }
     else
     {
-        TOSMBSessionFile *file = [uploadStream requestFileForItemAtPath:uploadStream.path
-                                                         inTree:uploadStream.treeID];
+        TOSMBSessionFile *file = [uploadStream requestContent];
         [self didFinishWithItem:file];
     }
     

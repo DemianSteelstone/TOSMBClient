@@ -23,6 +23,11 @@
 
 @implementation TOSMBSessionStream
 
++(instancetype)streamForPath:(NSString *)path
+{
+    return [[self alloc] initWithPath:path];
+}
+
 -(instancetype)initWithPath:(NSString *)path
 {
     self = [super init];
@@ -65,6 +70,13 @@
 
 #pragma mark -
 
+-(TOSMBSessionFile *)requestContent
+{
+    NSString *path = [self.path formattedFilePath];
+    return [self requestFileForItemAtPath:path
+                                   inTree:self.treeID];
+}
+
 - (TOSMBSessionFile *)requestFileForItemAtPath:(NSString *)filePath inTree:(smb_tid)treeID
 {
     const char *fileCString = [filePath cStringUsingEncoding:NSUTF8StringEncoding];
@@ -95,10 +107,18 @@
     }
     else
     {
-        TOSMBSessionFile *file = [self requestFileForItemAtPath:self.path
-                                                         inTree:self.treeID];
-        if (successBlock)
-            successBlock(file);
+        TOSMBSessionFile *file = [self requestContent];
+        
+        if (file == nil)
+        {
+            if (failBlock)
+                failBlock(errorForErrorCode(TOSMBSessionErrorCodeFileNotFound));
+        }
+        else
+        {
+            if (successBlock)
+                successBlock(file);
+        }
     }
     
     self.cleanupBlock();
@@ -136,16 +156,21 @@
 
 #pragma mark -
 
+-(void)close
+{
+    _closed = YES;
+}
+
 -(void)openStream:(dispatch_block_t)successBlock failBlock:(TOSMBSessionStreamFailBlock)failBlock
 {
     self.failHandler = failBlock;
     if ([self connectToShare])
     {
-        if ([self findTargetFile])
+        if (!self.isClosed && [self findTargetFile])
         {
-            if ([self openFile])
+            if (!self.isClosed && [self openFile])
             {
-                _open = YES;
+                _opened = YES;
                 if (successBlock)
                     successBlock();
             }
@@ -153,7 +178,6 @@
     }
 }
 
-//-(BOOL)connectToShareWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
 -(BOOL)connectToShare
 {
     //Connect to share
@@ -170,11 +194,6 @@
     }
     
     self.treeID = treeID;
-    
-//    if (weakOperation.isCancelled) {
-//        self.cleanupBlock();
-//        return NO;
-//    }
     
     return YES;
 }
@@ -197,6 +216,5 @@
             self.failHandler(error);
     });
 }
-
 
 @end

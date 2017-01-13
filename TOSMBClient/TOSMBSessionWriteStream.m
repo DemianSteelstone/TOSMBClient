@@ -46,8 +46,7 @@
 {
     //Find the target file
     //Get the file info we'll be working off
-    NSString *path = [self.path formattedFilePath];
-    self.file = [self requestFileForItemAtPath:path inTree:self.treeID];
+    self.file = [self requestContent];
     
     return YES;
 }
