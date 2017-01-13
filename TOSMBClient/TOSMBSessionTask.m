@@ -148,7 +148,8 @@
 {
     //Find the target file
     //Get the file info we'll be working off
-    self.file = [self requestFileForItemAtPath:self.formattedFilePath inTree:self.treeID];
+    NSString *path = [self formattedFilePath:self.smbFilePath];
+    self.file = [self requestFileForItemAtPath:path inTree:self.treeID];
     
     if (self.isNewFile == NO)
     {
@@ -179,7 +180,8 @@
     
     smb_fd fileID = 0;;
     //Open the file handle
-    smb_fopen(self.smbSession, self.treeID, [self.formattedFilePath cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
+    NSString *path = [self formattedFilePath:self.smbFilePath];
+    smb_fopen(self.smbSession, self.treeID, [path cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
     if (!fileID) {
         [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
         self.cleanupBlock();
@@ -252,9 +254,9 @@
 
 #pragma mark - Private
 
--(NSString *)formattedFilePath
+-(NSString *)formattedFilePath:(NSString *)path
 {
-    NSString *formattedPath = [self.session filePathExcludingSharePathFromPath:self.smbFilePath];
+    NSString *formattedPath = [self.session filePathExcludingSharePathFromPath:path];
     formattedPath = [NSString stringWithFormat:@"\\%@",formattedPath];
     formattedPath = [formattedPath stringByReplacingOccurrencesOfString:@"/" withString:@"\\\\"];
     return formattedPath;

@@ -12,9 +12,7 @@
 #import "TOSMBSessionCreateFolderTask.h"
 #import "TOSMBSessionTaskPrivate.h"
 
-
-
-@interface TOSMBSessionCreateFolderTask ()
+@interface TOSMBSessionCreateFolderTask () <TOSMBSessionConcreteTask>
 
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath

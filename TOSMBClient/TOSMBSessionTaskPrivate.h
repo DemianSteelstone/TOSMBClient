@@ -74,7 +74,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)fail;
 - (void)didFailWithError:(NSError *)error;
 
--(NSString *)formattedFilePath;
+-(NSString *)formattedFilePath:(NSString *)path;
 
 @end
 

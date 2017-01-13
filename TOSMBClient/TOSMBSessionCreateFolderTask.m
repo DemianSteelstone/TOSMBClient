@@ -53,7 +53,8 @@
     if (weakOperation.isCancelled)
         return;
     
-    const char *fileCString = [self.formattedFilePath cStringUsingEncoding:NSUTF8StringEncoding];
+    NSString *path = [self formattedFilePath:self.smbFilePath];
+    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
     
     int result = smb_directory_create(self.smbSession,self.treeID,fileCString);
     if (result)
