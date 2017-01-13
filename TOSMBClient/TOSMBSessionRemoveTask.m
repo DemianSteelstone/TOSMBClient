@@ -24,6 +24,7 @@
 {
     self = [super initWithSession:session path:smbPath];
     self.dontOpenFile = YES;
+    self.dontCheckFolder = YES;
     return self;
 }
 

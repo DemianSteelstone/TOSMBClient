@@ -54,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) BOOL isNewFile;
 @property (nonatomic) BOOL dontOpenFile;
+@property (nonatomic) BOOL dontCheckFolder;
 
 @property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskIdentifier;
 

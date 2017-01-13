@@ -164,7 +164,7 @@
         return NO;
     }
     
-    if (self.file.directory) {
+    if (self.dontCheckFolder == NO && self.file.directory) {
         [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeDirectoryDownloaded)];
         self.cleanupBlock();
         return NO;

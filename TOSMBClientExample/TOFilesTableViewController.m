@@ -19,6 +19,10 @@
 @end
 
 @implementation TOFilesTableViewController
+{
+    TOSMBSessionCreateFolderTask *_createFolderTask;
+    TOSMBSessionRemoveTask *_removeTask;
+}
 
 - (instancetype)initWithSession:(TOSMBSession *)session title:(NSString *)title
 {
@@ -30,6 +34,18 @@
     return self;
 }
 
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [self.navigationController setToolbarHidden:NO animated:YES];
+}
+
+-(void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [self.navigationController setToolbarHidden:YES animated:YES];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     
@@ -37,12 +53,16 @@
     
     if (self.path.length) {
         UIBarButtonItem *uploadButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(upload:)];
-        self.navigationItem.rightBarButtonItems = @[self.navigationItem.rightBarButtonItems.firstObject, uploadButton];
+        UIBarButtonItem *createFolder = [[UIBarButtonItem alloc] initWithTitle:@"Create folder"
+                                                                         style:UIBarButtonItemStylePlain
+                                                                        target:self
+                                                                        action:@selector(createFolder:)];
+        self.toolbarItems = @[uploadButton,createFolder];
     }
 }
 
 - (void)upload:(id)sender {
-    self.navigationItem.rightBarButtonItems.lastObject.enabled = NO;
+    
     NSString *path = [[self.path stringByAppendingPathComponent:[NSUUID UUID].UUIDString] stringByAppendingPathExtension:@"txt"];
     NSData *data = [path dataUsingEncoding:NSUTF8StringEncoding];
     
@@ -61,6 +81,21 @@
     }];
     
     [self.uploadTask resume];
+}
+
+- (void)createFolder:(id)sender {
+    
+    NSString *path = [self.path stringByAppendingPathComponent:[NSUUID UUID].UUIDString];
+    
+    __weak typeof(self) weakSelf = self;
+    
+    _createFolderTask = [self.session createFolderAtPath:path
+                                       completionHandler:^(TOSMBSessionFile *folder) {
+                                           [weakSelf reloadData];
+                                       } failHandler:^(NSError *error) {
+                                           
+                                       }];
+    [_createFolderTask resume];
 }
 
 - (void)reloadData {
@@ -118,6 +153,19 @@
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"SMB Client Error" message:error.localizedDescription delegate:nil cancelButtonTitle:nil otherButtonTitles:@"OK", nil];
         [alert show];
     }];
+}
+
+-(void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    TOSMBSessionFile *file = self.files[indexPath.row];
+    __weak typeof(self) weakSelf = self;
+    _removeTask = [self.session removeTaskForItem:file.filePath
+                                completionHandler:^{
+                                    [weakSelf reloadData];
+                                } failHandler:^(NSError *error) {
+                                    NSLog(@"Failed to delete %@",file.filePath);
+                                }];
+    [_removeTask resume];
 }
 
 - (void)setFiles:(NSArray <TOSMBSessionFile *> *)files
