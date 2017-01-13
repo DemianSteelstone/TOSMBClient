@@ -80,7 +80,7 @@
         weakSelf.navigationItem.rightBarButtonItems.lastObject.enabled = YES;
     }];
     
-    [self.uploadTask resume];
+    [self.uploadTask start];
 }
 
 - (void)createFolder:(id)sender {
@@ -95,7 +95,7 @@
                                        } failHandler:^(NSError *error) {
                                            
                                        }];
-    [_createFolderTask resume];
+    [_createFolderTask start];
 }
 
 - (void)reloadData {
@@ -165,7 +165,7 @@
                                 } failHandler:^(NSError *error) {
                                     NSLog(@"Failed to delete %@",file.filePath);
                                 }];
-    [_removeTask resume];
+    [_removeTask start];
 }
 
 - (void)setFiles:(NSArray <TOSMBSessionFile *> *)files

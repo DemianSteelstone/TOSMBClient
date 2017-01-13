@@ -57,25 +57,12 @@
     tableController.navigationItem.rightBarButtonItem = item;
 }
 
-- (IBAction)suspendButtonTapped:(id)sender
-{
-    if (self.downloadTask.state == TOSMBSessionDownloadTaskStateRunning) {
-        [self.downloadTask suspend];
-        [self.suspendButton setTitle:@"Resume" forState:UIControlStateNormal];
-    }
-    else {
-        [self.downloadTask resume];
-        [self.suspendButton setTitle:@"Suspend" forState:UIControlStateNormal];
-    }
-}
-
 - (IBAction)cancelButtonTapped:(id)sender
 {
     if (self.downloadTask.state != TOSMBSessionDownloadTaskStateCancelled) {
         [self.downloadTask cancel];
         self.cancelButton.enabled = NO;
         self.progressView.progress = 0.0f;
-        [self.suspendButton setTitle:@"Resume" forState:UIControlStateNormal];
     }
 }
 
@@ -102,14 +89,13 @@
     self.progressView.progress = 0.0f;
     
     self.cancelButton.hidden = NO;
-    self.suspendButton.hidden = NO;
     self.progressView.alpha = 1.0f;
     
     self.session = session;
     self.downloadTask = [session downloadTaskForFileAtPath:filePath destinationPath:nil delegate:self];
     
     [self dismissViewControllerAnimated:YES completion:^{
-        [self.downloadTask resume];
+        [self.downloadTask start];
     }];
 }
 
@@ -118,7 +104,6 @@
 - (void)updateUiToDownloadFinishedState
 {
     self.cancelButton.hidden = YES;
-    self.suspendButton.hidden = YES;
     self.progressView.alpha = 0.5f;
 
     self.navigationItem.rightBarButtonItem.enabled = YES;

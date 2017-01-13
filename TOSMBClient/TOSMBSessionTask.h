@@ -47,12 +47,6 @@ typedef void(^TOSMBSessionTaskFailBlock)(NSError *error);
 /** The parent session that is managing this download task. (Retained by this class) */
 @property (readonly, weak) TOSMBSession *session;
 
-/** The file path to the target file on the SMB network device. */
-@property (readonly) NSString *smbFilePath;
-
-/** Returns if download data from a suspended task exists */
-@property (readonly) BOOL canBeResumed;
-
 /** The state of the task. */
 @property (readonly) TOSMBSessionTaskState state;
 
@@ -62,12 +56,7 @@ typedef void(^TOSMBSessionTaskFailBlock)(NSError *error);
  Downloads are resumed if there is already data for this file on disk,
  and the modification date of that file matches the one on the network device.
  */
-- (void)resume;
-
-/**
- Suspends a task and halts network activity.
- */
-- (void)suspend;
+- (void)start;
 
 /**
  Cancels a task, and deletes all related transient data on disk.
