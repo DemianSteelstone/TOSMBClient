@@ -7,6 +7,7 @@
 //
 
 #import "TOSMBSessionCreateFolderTaskPrivate.h"
+#import "TOSMBSessionWriteStream.h"
 
 @interface TOSMBSessionCreateFolderTask ()
 
@@ -21,9 +22,8 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
 {
-    self = [super initWithSession:session path:smbPath];
-    self.isNewFile = YES;
-    self.dontOpenFile = YES;
+    TOSMBSessionWriteStream *stream = [TOSMBSessionWriteStream sessionForPath:smbPath];
+    self = [super initWithSession:session stream:stream];
     return self;
 }
 
@@ -53,21 +53,14 @@
     if (weakOperation.isCancelled)
         return;
     
-    NSString *path = [self formattedFilePath:self.smbFilePath];
-    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
+    __weak typeof(self) weakSelf = self;
+    TOSMBSessionWriteStream *writeStream = (TOSMBSessionWriteStream *)self.stream;
     
-    int result = smb_directory_create(self.smbSession,self.treeID,fileCString);
-    if (result)
-    {
-        [self didFailWithError:errorForErrorCode(result)];
-    }
-    else
-    {
-        TOSMBSessionFile *file = [self requestFileForItemAtPath:self.smbFilePath inTree:self.treeID];
-        [self didFinishWithItem:file];
-    }
-    
-    self.cleanupBlock();
+    [writeStream createFolderWithSuccessBlock:^(TOSMBSessionFile *folder){
+        [weakSelf didFinishWithItem:folder];
+    } failBlock:^(NSError *error) {
+        [weakSelf didFailWithError:error];
+    }];
 }
 
 - (void)didFinishWithItem:(TOSMBSessionFile *)folder {
@@ -82,6 +75,5 @@
         }
     });
 }
-
 
 @end

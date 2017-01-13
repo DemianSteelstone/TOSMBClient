@@ -20,12 +20,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 // -------------------------------------------------------------------------------
 
-#import <CommonCrypto/CommonDigest.h>
-#import <UIKit/UIKit.h>
-
 #import "TOSMBSessionDownloadTaskPrivate.h"
-#import "TOSMBSessionPrivate.h"
-
+#import "TOSMBSessionDownloadStream.h"
 
 // -------------------------------------------------------------------------
 
@@ -42,30 +38,29 @@
 @property (nonatomic, weak) id<TOSMBSessionDownloadTaskDelegate> delegate;
 @property (nonatomic, copy) TOSMBSessionDownloadTaskSuccsessBlock successHandler;
 
-/* File Path Methods */
-- (NSString *)hashForFilePath;
-- (NSString *)filePathForTemporaryDestination;
-- (NSString *)finalFilePathForDownloadedFile;
-- (NSString *)documentsDirectory;
-
-/* Feedback events sent to either the delegate or callback blocks */
-- (void)didSucceedWithFilePath:(NSString *)filePath;
-- (void)didUpdateWriteBytes:(uint64_t)bytesWritten totalBytesWritten:(uint64_t)totalBytesWritten totalBytesExpected:(uint64_t)totalBytesExpected;
-- (void)didResumeAtOffset:(uint64_t)bytesWritten totalBytesExpected:(uint64_t)totalBytesExpected;
-
 @end
 
 @implementation TOSMBSessionDownloadTask
 
 @dynamic delegate;
-@dynamic failHandler;
-@dynamic state;
 
-- (instancetype)init
+-(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)path
 {
-    //This class cannot be instantiated on its own.
-    [self doesNotRecognizeSelector:_cmd];
-    return nil;
+    TOSMBSessionDownloadStream *stream = [TOSMBSessionDownloadStream sessionForPath:path];
+    self = [super initWithSession:session stream:stream];
+    return self;
+}
+
+- (instancetype)initWithSession:(TOSMBSession *)session
+                       filePath:(NSString *)filePath
+                destinationPath:(NSString *)destinationPath
+{
+    if ((self = [self initWithSession:session path:filePath])) {
+        
+        _destinationFilePath = destinationPath;
+    }
+    
+    return self;
 }
 
 - (instancetype)initWithSession:(TOSMBSession *)session
@@ -73,12 +68,11 @@
                 destinationPath:(NSString *)destinationPath
                        delegate:(id<TOSMBSessionDownloadTaskDelegate>)delegate
 {
-    if ((self = [super initWithSession:session path:filePath])) {
+    if ((self = [self initWithSession:session
+                             filePath:filePath
+                      destinationPath:destinationPath])) {
         
-        _destinationFilePath = destinationPath.length ? destinationPath : [self documentsDirectory];
         self.delegate = delegate;
-        
-        _tempFilePath = [self filePathForTemporaryDestination];
     }
     
     return self;
@@ -91,141 +85,27 @@
                  successHandler:(TOSMBSessionDownloadTaskSuccsessBlock)successHandler
                     failHandler:(TOSMBSessionTaskFailBlock)failHandler
 {
-    if (([super initWithSession:session path:filePath])) {
-        self.session = session;
-        
-        _destinationFilePath = destinationPath.length ? destinationPath : [self documentsDirectory];
-        
+    if ((self = [self initWithSession:session
+                             filePath:filePath
+                      destinationPath:destinationPath])){
         self.progressHandler = progressHandler;
         _successHandler = successHandler;
         self.failHandler = failHandler;
-        
-        _tempFilePath = [self filePathForTemporaryDestination];
     }
     
     return self;
 }
 
-- (void)dealloc
-{
-    // This is called after TOSMBSession dealloc is called, where the smb_session object is released.
-    // As so, probably this part is not required at all, so I'm commenting it out. 
-    // Anyway, even if my assumptions are wrong, we should firstly check if the whole session still exists.
-
-//    if (self.downloadSession && self.session) {
-//        smb_session_destroy(self.downloadSession);
-//    }
-}
-#pragma mark - Temporary Destination Methods -
-- (NSString *)filePathForTemporaryDestination
-{
-    NSString *fileName = [[self hashForFilePath] stringByAppendingPathExtension:@"smb.data"];
-    return [NSTemporaryDirectory() stringByAppendingPathComponent:fileName];
-}
-
-- (NSString *)hashForFilePath
-{
-    NSString *filePath = self.sourceFilePath.lowercaseString;
-    
-    NSData *data = [filePath dataUsingEncoding:NSUTF8StringEncoding];
-    uint8_t digest[CC_SHA1_DIGEST_LENGTH];
-    
-    CC_SHA1(data.bytes, (unsigned int)data.length, digest);
-    
-    NSMutableString *output = [NSMutableString stringWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
-    
-    for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++)
-    {
-        [output appendFormat:@"%02x", digest[i]];
-    }
-    
-    return [NSString stringWithString:output];
-}
-
-- (NSString *)finalFilePathForDownloadedFile
-{
-    NSString *path = self.destinationFilePath;
-    
-    //Check to ensure the destination isn't referring to a file name
-    NSString *fileName = [path lastPathComponent];
-    BOOL isFile = ([fileName rangeOfString:@"."].location != NSNotFound && [fileName characterAtIndex:0] != '.');
-    
-    NSString *folderPath = nil;
-    if (isFile) {
-        folderPath = [path stringByDeletingLastPathComponent];
-    }
-    else {
-        fileName = [self.sourceFilePath lastPathComponent];
-        folderPath = path;
-    }
-    
-    path = [folderPath stringByAppendingPathComponent:fileName];
-    
-    //If a file with that name already exists in the destination directory, append a number on the end of the file name
-    NSString *newFilePath = path;
-    NSString *newFileName = fileName;
-    NSInteger index = 1;
-    while ([[NSFileManager defaultManager] fileExistsAtPath:newFilePath]) {
-        newFileName = [NSString stringWithFormat:@"%@-%ld.%@", [fileName stringByDeletingPathExtension], (long)index++, [fileName pathExtension]];
-        newFilePath = [folderPath stringByAppendingPathComponent:newFileName];
-    }
-    
-    return newFilePath;
-}
-
-- (NSString *)documentsDirectory
-{
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *basePath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
-    return basePath;
-}
-
 #pragma mark - Public Control Methods -
 
-- (void)cancel
-{
-    if (self.state != TOSMBSessionTaskStateRunning)
-        return;
-    
-    id deleteBlock = ^{
-        [[NSFileManager defaultManager] removeItemAtPath:self.tempFilePath error:nil];
-    };
-    
-    NSBlockOperation *deleteOperation = [[NSBlockOperation alloc] init];
-    [deleteOperation addExecutionBlock:deleteBlock];
-    if (self.taskOperation) { // if the download operation doesn't exist, we can delete file even immediately
-        [deleteOperation addDependency:self.taskOperation];
-    }
-    [self.session.taskQueue addOperation:deleteOperation];
-    
-    [self.taskOperation cancel];
-    self.state = TOSMBSessionTaskStateCancelled;
-    
-    self.taskOperation = nil;
-}
-
-#pragma mark - Feedback Methods -
-- (BOOL)canBeResumed
-{
-    if ([[NSFileManager defaultManager] fileExistsAtPath:self.tempFilePath] == NO)
-        return NO;
-    
-    NSDate *modificationTime = [[[NSFileManager defaultManager] attributesOfItemAtPath:self.tempFilePath error:nil] fileModificationDate];
-    if ([modificationTime isEqual:self.file.modificationTime] == NO) {
-        return NO;
-    }
-    
-    return YES;
-}
-
-- (void)didSucceedWithFilePath:(NSString *)filePath
+- (void)didSucceed
 {
     dispatch_sync(dispatch_get_main_queue(), ^{
         if (self.delegate && [self.delegate respondsToSelector:@selector(downloadTask:didFinishDownloadingToPath:)])
-            [self.delegate downloadTask:self didFinishDownloadingToPath:filePath];
+            [self.delegate downloadTask:self didFinishDownloadingToPath:self.destinationFilePath];
         
         if (self.successHandler)
-            self.successHandler(filePath);
+            self.successHandler(self.destinationFilePath);
     });
 }
 
@@ -243,22 +123,18 @@
     });
 }
 
-- (void)didUpdateWriteBytes:(uint64_t)bytesWritten totalBytesWritten:(uint64_t)totalBytesWritten totalBytesExpected:(uint64_t)totalBytesExpected
+- (void)didDownloadBytes:(uint64_t)bytesWritten
+          totalBytesDownloaded:(uint64_t)totalBytesWritten
+         totalBytesExpected:(uint64_t)totalBytesExpected
 {
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         if (self.delegate && [self.delegate respondsToSelector:@selector(downloadTask:didWriteBytes:totalBytesReceived:totalBytesExpectedToReceive:)])
-            [self.delegate downloadTask:self didWriteBytes:bytesWritten totalBytesReceived:self.countOfBytesReceived totalBytesExpectedToReceive:self.countOfBytesExpectedToReceive];
+            [self.delegate downloadTask:self didWriteBytes:bytesWritten
+                     totalBytesReceived:self.countOfBytesReceived
+            totalBytesExpectedToReceive:self.countOfBytesExpectedToReceive];
         
         if (self.progressHandler)
             self.progressHandler(self.countOfBytesReceived, self.countOfBytesExpectedToReceive);
-    }];
-}
-
-- (void)didResumeAtOffset:(uint64_t)bytesWritten totalBytesExpected:(uint64_t)totalBytesExpected
-{
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-        if (self.delegate && [self.delegate respondsToSelector:@selector(downloadTask:didResumeAtOffset:totalBytesExpectedToReceive:)])
-            [self.delegate downloadTask:self didResumeAtOffset:bytesWritten totalBytesExpectedToReceive:totalBytesExpected];
     }];
 }
 
@@ -269,86 +145,22 @@
     if (weakOperation.isCancelled)
         return;
     
-    self.countOfBytesExpectedToReceive = self.file.fileSize;
+    __weak typeof(self) weakSelf = self;
     
-    //---------------------------------------------------------------------------------------
-    //Start downloading
+    TOSMBSessionDownloadStream *downloadStream = (TOSMBSessionDownloadStream *)self.stream;
     
-    //Create the directories to the download destination
-    [[NSFileManager defaultManager] createDirectoryAtPath:[self.tempFilePath stringByDeletingLastPathComponent] withIntermediateDirectories:YES attributes:nil error:nil];
+    NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:self.destinationFilePath];
     
-    //Create a new blank file to write to
-    if (self.canBeResumed == NO)
-        [[NSFileManager defaultManager] createFileAtPath:self.tempFilePath contents:nil attributes:nil];
-    
-    //Open a handle to the file and skip ahead if we're resuming
-    NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:self.tempFilePath];
-    unsigned long long seekOffset = (ssize_t)[fileHandle seekToEndOfFile];
-    self.countOfBytesReceived = seekOffset;
-    
-    //Create a background handle so the download will continue even if the app is suspended
-    self.backgroundTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{ [self suspend]; }];
-    
-    if (seekOffset > 0) {
-        smb_fseek(self.smbSession, self.fileID, (ssize_t)seekOffset, SMB_SEEK_SET);
-        [self didResumeAtOffset:seekOffset totalBytesExpected:self.countOfBytesExpectedToReceive];
-    }
-    
-    //Perform the file download
-    int64_t bytesRead = 0;
-    NSInteger bufferSize = 65535;
-    char *buffer = malloc(bufferSize);
-    
-    do {
-        //Read the bytes from the network device
-        bytesRead = smb_fread(self.smbSession, self.fileID, buffer, bufferSize);
-        if (bytesRead < 0) {
-            [self fail];
-            [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileDownloadFailed)];
-            break;
-        }
-        
-        //Save them to the file handle (And ensure the NSData object is flushed immediately)
-        @autoreleasepool {
-            [fileHandle writeData:[NSData dataWithBytes:buffer length:(NSUInteger)bytesRead]];
-        }
-        
-        //Ensure the data is properly written to disk before proceeding
-        [fileHandle synchronizeFile];
-        
-        if (weakOperation.isCancelled)
-            break;
-        
-        self.countOfBytesReceived += bytesRead;
-        
-        [self didUpdateWriteBytes:bytesRead totalBytesWritten:self.countOfBytesReceived totalBytesExpected:self.countOfBytesExpectedToReceive];
-    } while (bytesRead > 0);
-    
-    //Set the modification date to match the one on the SMB device so we can compare the two at a later date
-    [[NSFileManager defaultManager] setAttributes:@{NSFileModificationDate:self.file.modificationTime} ofItemAtPath:self.tempFilePath error:nil];
-    
-    free(buffer);
-    [fileHandle closeFile];
-    
-    if (weakOperation.isCancelled  || self.state != TOSMBSessionTaskStateRunning) {
-        self.cleanupBlock();
-        return;
-    }
-    
-    //---------------------------------------------------------------------------------------
-    //Move the finished file to its destination
-    
-    //Workout the destination of the file and move it
-    NSString *finalDestinationPath = [self finalFilePathForDownloadedFile];
-    [[NSFileManager defaultManager] moveItemAtPath:self.tempFilePath toPath:finalDestinationPath error:nil];
-    
-    self.state = TOSMBSessionTaskStateCompleted;
-    
-    //Alert the delegate that we finished, so they may perform any additional cleanup operations
-    [self didSucceedWithFilePath:finalDestinationPath];
-    
-    //Perform a final cleanup of all handles and references
-    self.cleanupBlock();
+    [downloadStream downloadFileToFileHandle:fileHandle
+                               progressBlock:^(uint64_t bytesWritten, uint64_t totalBytesWritten, uint64_t totalBytesExpected) {
+                                   [weakSelf didDownloadBytes:bytesWritten
+                                         totalBytesDownloaded:totalBytesWritten
+                                           totalBytesExpected:totalBytesExpected];
+                               } successBlock:^{
+                                   [weakSelf didSucceed];
+                               } failBlock:^(NSError *error) {
+                                   [weakSelf didFailWithError:error];
+                               }];
 }
 
 @end

@@ -7,6 +7,7 @@
 //
 
 #import "TOSMBSessionMoveTaskPrivate.h"
+#import "TOSMBSessionReadStream.h"
 
 @interface TOSMBSessionMoveTask ()
 
@@ -20,13 +21,19 @@
 
 @dynamic delegate;
 
+-(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
+{
+    TOSMBSessionReadStream *stream = [TOSMBSessionReadStream sessionForPath:smbPath];
+    self = [super initWithSession:session stream:stream];
+    return self;
+}
+
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath
                         dstPath:(NSString *)dstPath
 {
-    if ((self = [super initWithSession:session path:dstPath])) {
+    if ((self = [self initWithSession:session path:srcPath])) {
         
-        self.dontCheckFolder = YES;
         _dstPath = dstPath;
     }
     
@@ -62,24 +69,15 @@
     if (weakOperation.isCancelled)
         return;
     
-    NSString *srcPath = [self formattedFilePath:self.smbFilePath];
-    NSString *dstPath = [self formattedFilePath:self.dstPath];
+    __weak typeof(self) weakSelf = self;
+    TOSMBSessionReadStream *writeStream = (TOSMBSessionReadStream *)self.stream;
     
-    const char *srcPathCString = [srcPath cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *dstPathCString = [dstPath cStringUsingEncoding:NSUTF8StringEncoding];
-    
-    int result = smb_file_mv(self.smbSession,self.treeID,srcPathCString,dstPathCString);
-    if (result)
-    {
-        [self didFailWithError:errorForErrorCode(result)];
-    }
-    else
-    {
-        TOSMBSessionFile *file = [self requestFileForItemAtPath:self.dstPath inTree:self.treeID];
-        [self didFinishWithItem:file];
-    }
-    
-    self.cleanupBlock();
+    [writeStream moveItemToPath:_dstPath
+                   successBlock:^(TOSMBSessionFile *folder){
+                       [weakSelf didFinishWithItem:folder];
+                   } failBlock:^(NSError *error) {
+                       [weakSelf didFailWithError:error];
+                   }];
 }
 
 - (void)didFinishWithItem:(TOSMBSessionFile *)item {

@@ -22,11 +22,11 @@
 
 #import "TOSMBSessionUploadTaskPrivate.h"
 #import "TOSMBSessionPrivate.h"
+#import "TOSMBSessionUploadStream.h"
 
 @interface TOSMBSessionUploadTask ()
 
-@property (nonatomic, strong) NSFileHandle *sourceFilehandle;
-@property (nonatomic) long long fileSize;
+@property (nonatomic, strong) NSString *filePath;
 
 @property (nonatomic, weak) id <TOSMBSessionUploadTaskDelegate> delegate;
 @property (nonatomic, copy) TOSMBSessionUploadTaskSuccessBlock successHandler;
@@ -37,16 +37,20 @@
 
 @dynamic delegate;
 
+-(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)path
+{
+    TOSMBSessionUploadStream *stream = [TOSMBSessionUploadStream sessionForPath:path];
+    self = [super initWithSession:session stream:stream];
+    return self;
+}
+
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath
                         dstPath:(NSString *)dstPath
 {
-    if ((self = [super initWithSession:session path:dstPath])) {
+    if ((self = [self initWithSession:session path:dstPath])) {
         
-        self.sourceFilehandle = [NSFileHandle fileHandleForReadingAtPath:srcPath];
-        self.isNewFile = YES;
-        NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:srcPath error:NULL];
-        self.fileSize = [attributes fileSize];
+        self.filePath = srcPath;
     }
     
     return self;
@@ -80,17 +84,17 @@
 
 #pragma mark - delegate helpers
 
-- (void)didSendBytes:(NSInteger)recentCount bytesSent:(NSInteger)totalCount {
+- (void)didSendBytes:(long long)sendBytes totalBytesSent:(long long)totalBytesSent totalBytesExpectedToSend:(long long)totalBytesExpectedToSend {
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([weakSelf.delegate respondsToSelector:@selector(uploadTask:didSendBytes:totalBytesSent:totalBytesExpectedToSend:)]) {
             [weakSelf.delegate uploadTask:weakSelf
-                             didSendBytes:recentCount
-                           totalBytesSent:totalCount
-                 totalBytesExpectedToSend:weakSelf.fileSize];
+                             didSendBytes:sendBytes
+                           totalBytesSent:totalBytesSent
+                 totalBytesExpectedToSend:totalBytesExpectedToSend];
         }
         if (weakSelf.progressHandler) {
-            weakSelf.progressHandler(totalCount, weakSelf.fileSize);
+            weakSelf.progressHandler(totalBytesSent, totalBytesExpectedToSend);
         }
     });
 }
@@ -114,32 +118,18 @@
     if (weakOperation.isCancelled)
         return;
     
-    NSData *data;
-    NSInteger chunkSize = 65471;
+    __weak typeof(self) weakSelf = self;
     
-    ssize_t bytesWritten = 0;
-    ssize_t totalBytesWritten = 0;
+    TOSMBSessionUploadStream *uploadStream = (TOSMBSessionUploadStream *)self.stream;
     
-    [self.sourceFilehandle seekToFileOffset:0];
-    
-    while (((data = [self.sourceFilehandle readDataOfLength: chunkSize]).length > 0))
-    {
-        NSUInteger bufferSize = data.length;
-        void *buffer = malloc(bufferSize);
-        [data getBytes:buffer length:bufferSize];
-        
-        bytesWritten = smb_fwrite(self.smbSession, self.fileID, buffer, bufferSize);
-        
-        free(buffer);
-        totalBytesWritten += bytesWritten;
-        [self didSendBytes:bytesWritten bytesSent:totalBytesWritten];
-    }
-    
-    // Get uploaded file info
-    TOSMBSessionFile *file = [self requestFileForItemAtPath:self.smbFilePath inTree:self.treeID];
-    [self didFinishWithItem:file];
-    
-    self.cleanupBlock();
+    [uploadStream upload:self.filePath
+           progressBlock:^(uint64_t bytesWritten,uint64_t totalBytesWritten, uint64_t totalBytesExpected) {
+               [weakSelf didSendBytes:bytesWritten totalBytesSent:totalBytesWritten totalBytesExpectedToSend:totalBytesExpected];
+    } successBlock:^(TOSMBSessionFile *item) {
+        [weakSelf didFinishWithItem:item];
+    } failBlock:^(NSError *error) {
+        [weakSelf didFailWithError:error];
+    }];
 }
 
 @end

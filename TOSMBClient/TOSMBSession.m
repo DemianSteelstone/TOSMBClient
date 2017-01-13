@@ -484,51 +484,8 @@
     return task;
 }
 
-#pragma mark - String Parsing -
-- (NSString *)shareNameFromPath:(NSString *)path
-{
-    path = [path copy];
-    
-    //Remove any potential slashes at the start
-    if ([[path substringToIndex:2] isEqualToString:@"//"]) {
-        path = [path substringFromIndex:2];
-    }
-    else if ([[path substringToIndex:1] isEqualToString:@"/"]) {
-        path = [path substringFromIndex:1];
-    }
-    
-    NSRange range = [path rangeOfString:@"/"];
-    
-    if (range.location != NSNotFound)
-        path = [path substringWithRange:NSMakeRange(0, range.location)];
-    
-    return path;
-}
-
-- (NSString *)filePathExcludingSharePathFromPath:(NSString *)path
-{
-    path = [path copy];
-    
-    //Remove any potential slashes at the start
-    if ([[path substringToIndex:2] isEqualToString:@"//"] || [[path substringToIndex:2] isEqualToString:@"\\\\"]) {
-        path = [path substringFromIndex:2];
-    }
-    else if ([[path substringToIndex:1] isEqualToString:@"/"] || [[path substringToIndex:1] isEqualToString:@"\\"]) {
-        path = [path substringFromIndex:1];
-    }
-    
-    NSRange range = [path rangeOfString:@"/"];
-    if (range.location == NSNotFound) {
-        range = [path rangeOfString:@"\\"];
-    }
-    
-    if (range.location != NSNotFound)
-        path = [path substringFromIndex:range.location+1];
-    
-    return path;
-}
-
 #pragma mark - Accessors -
+
 - (NSInteger)guest
 {
     if (self.session == NULL)

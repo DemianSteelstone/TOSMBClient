@@ -7,6 +7,8 @@
 //
 
 #import "TOSMBSessionRemoveTaskPrivate.h"
+#import "TOSMBSessionWriteStream.h"
+
 
 @interface TOSMBSessionRemoveTask ()
 
@@ -22,9 +24,8 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
 {
-    self = [super initWithSession:session path:smbPath];
-    self.dontOpenFile = YES;
-    self.dontCheckFolder = YES;
+    TOSMBSessionWriteStream *stream = [TOSMBSessionWriteStream sessionForPath:smbPath];
+    self = [super initWithSession:session stream:stream];
     return self;
 }
 
@@ -53,29 +54,14 @@
     
     if (weakOperation.isCancelled)
         return;
+    __weak typeof(self) weakSelf = self;
+    TOSMBSessionWriteStream *writeStream = (TOSMBSessionWriteStream *)self.stream;
     
-    NSString *path = [self formattedFilePath:self.smbFilePath];
-    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
-    
-    int result = 0;
-    
-    if (self.file.directory)
-    {
-        result = smb_directory_rm(self.smbSession,self.treeID,fileCString);
-    }
-    else
-    {
-        result = smb_file_rm(self.smbSession,self.treeID,fileCString);
-    }
-    
-    if (result)
-    {
-        [self didFailWithError:errorForErrorCode(result)];
-    }
-    else
-    {
-        [self didFinish];
-    }
+    [writeStream removeItemWithSuccessBlock:^{
+        [weakSelf didFinish];
+    } failBlock:^(NSError *error) {
+        [weakSelf didFailWithError:error];
+    }];
 }
 
 - (void)didFinish {

@@ -10,15 +10,15 @@
 
 @implementation TOSMBSessionRenameTask
 
-
-
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath
                         newName:(NSString *)newName
                        delegate:(id<TOSMBSessionMoveTaskDelegate>)delegate
 {
     NSString *newNamePath = [self newPathForPath:srcPath name:newName];
-    return [self initWithSession:session sourcePath:srcPath dstPath:newNamePath delegate:delegate];
+    return [self initWithSession:session sourcePath:srcPath
+                         dstPath:newNamePath
+                        delegate:delegate];
 }
 
 - (instancetype)initWithSession:(TOSMBSession *)session
@@ -28,7 +28,10 @@
                     failHandler:(TOSMBSessionTaskFailBlock)failHandler
 {
     NSString *newNamePath = [self newPathForPath:srcPath name:newName];
-    return [self initWithSession:session sourcePath:srcPath dstPath:newNamePath successHandler:successHandler failHandler:failHandler];
+    return [self initWithSession:session sourcePath:srcPath
+                         dstPath:newNamePath
+                  successHandler:successHandler
+                     failHandler:failHandler];
 }
 
 -(NSString *)newPathForPath:(NSString *)path name:(NSString *)name
