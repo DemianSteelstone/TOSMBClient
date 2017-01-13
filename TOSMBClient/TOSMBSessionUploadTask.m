@@ -22,7 +22,7 @@
 
 #import "TOSMBSessionUploadTaskPrivate.h"
 #import "TOSMBSessionPrivate.h"
-#import "TOSMBSessionUploadStream.h"
+#import "TOSMBSessionWriteStream.h"
 
 @interface TOSMBSessionUploadTask ()
 
@@ -39,7 +39,7 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)path
 {
-    TOSMBSessionUploadStream *stream = [TOSMBSessionUploadStream streamForPath:path];
+    TOSMBSessionWriteStream *stream = [TOSMBSessionWriteStream streamForPath:path];
     self = [super initWithSession:session stream:stream];
     return self;
 }
@@ -118,20 +118,45 @@
     if (weakOperation.isCancelled)
         return;
     
-    __weak typeof(self) weakSelf = self;
+    TOSMBSessionWriteStream *uploadStream = (TOSMBSessionWriteStream *)self.stream;
     
-    TOSMBSessionUploadStream *uploadStream = (TOSMBSessionUploadStream *)self.stream;
+    NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:self.filePath];
+    [fileHandle seekToFileOffset:0];
     
-    [uploadStream upload:self.filePath
-           progressBlock:^(uint64_t bytesWritten,uint64_t totalBytesWritten, uint64_t totalBytesExpected) {
-               [weakSelf didSendBytes:bytesWritten
-                       totalBytesSent:totalBytesWritten
-             totalBytesExpectedToSend:totalBytesExpected];
-    } successBlock:^(TOSMBSessionFile *item) {
-        [weakSelf didFinishWithItem:item];
-    } failBlock:^(NSError *error) {
-        [weakSelf didFailWithError:error];
-    }];
+    NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:self.filePath error:NULL];
+    long long expectedSize = [attributes fileSize];
+    
+    NSData *data;
+    ssize_t totalBytesWritten = 0;
+    NSError *error = nil;
+    
+    while (((data = [fileHandle readDataOfLength: TOSMBSessionStreamChunkSize]).length > 0))
+    {
+        [uploadStream writeData:data error:&error];
+        
+        if (error)
+        {
+            break;
+        }
+        
+        NSUInteger bufferSize = data.length;
+        totalBytesWritten += bufferSize;
+        
+        [self didSendBytes:bufferSize totalBytesSent:totalBytesWritten totalBytesExpectedToSend:expectedSize];
+        
+    }
+    if (error)
+    {
+        [self didFailWithError:error];
+    }
+    else
+    {
+        TOSMBSessionFile *file = [uploadStream requestFileForItemAtPath:uploadStream.path
+                                                         inTree:uploadStream.treeID];
+        [self didFinishWithItem:file];
+    }
+    
+    uploadStream.cleanupBlock();
 }
 
 @end

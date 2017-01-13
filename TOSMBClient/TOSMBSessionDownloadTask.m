@@ -151,16 +151,45 @@
     
     NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:self.destinationFilePath];
     
-    [downloadStream downloadFileToFileHandle:fileHandle
-                               progressBlock:^(uint64_t bytesWritten, uint64_t totalBytesWritten, uint64_t totalBytesExpected) {
-                                   [weakSelf didDownloadBytes:bytesWritten
-                                         totalBytesDownloaded:totalBytesWritten
-                                           totalBytesExpected:totalBytesExpected];
-                               } successBlock:^{
-                                   [weakSelf didSucceed];
-                               } failBlock:^(NSError *error) {
-                                   [weakSelf didFailWithError:error];
-                               }];
+    uint64_t totalBytesRead = 0;
+    uint64_t expectedSize = downloadStream.file.fileSize;
+    
+    NSError *error = nil;
+    
+    while (totalBytesRead < expectedSize) {
+        NSData *data = [downloadStream readChunk:&error];
+        
+        if (error)
+        {
+            break;
+        }
+        else
+        {
+            int64_t bytesRead = data.length;
+            totalBytesRead += bytesRead;
+            
+            //Save them to the file handle (And ensure the NSData object is flushed immediately)
+            [fileHandle writeData:data];
+            
+            //Ensure the data is properly written to disk before proceeding
+            [fileHandle synchronizeFile];
+            
+            [self didDownloadBytes:bytesRead totalBytesDownloaded:totalBytesRead totalBytesExpected:expectedSize];
+        }
+    };
+    
+    [fileHandle closeFile];
+    
+    if (error)
+    {
+        [weakSelf didFailWithError:error];
+    }
+    else
+    {
+        [weakSelf didSucceed];
+    }
+    
+    downloadStream.cleanupBlock();
 }
 
 @end

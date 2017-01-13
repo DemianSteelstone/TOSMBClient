@@ -7,7 +7,7 @@
 //
 
 #import "TOSMBSessionCreateFolderTaskPrivate.h"
-#import "TOSMBSessionWriteStream.h"
+#import "TOSMBSessionStream.h"
 
 @interface TOSMBSessionCreateFolderTask ()
 
@@ -22,7 +22,7 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
 {
-    TOSMBSessionWriteStream *stream = [TOSMBSessionWriteStream streamForPath:smbPath];
+    TOSMBSessionStream *stream = [TOSMBSessionStream streamForPath:smbPath];
     self = [super initWithSession:session stream:stream];
     return self;
 }
@@ -54,9 +54,8 @@
         return;
     
     __weak typeof(self) weakSelf = self;
-    TOSMBSessionWriteStream *writeStream = (TOSMBSessionWriteStream *)self.stream;
     
-    [writeStream createFolderWithSuccessBlock:^(TOSMBSessionFile *folder){
+    [self.stream createFolderWithSuccessBlock:^(TOSMBSessionFile *folder){
         [weakSelf didFinishWithItem:folder];
     } failBlock:^(NSError *error) {
         [weakSelf didFailWithError:error];

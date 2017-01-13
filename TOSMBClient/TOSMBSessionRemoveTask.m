@@ -7,7 +7,7 @@
 //
 
 #import "TOSMBSessionRemoveTaskPrivate.h"
-#import "TOSMBSessionWriteStream.h"
+#import "TOSMBSessionStream.h"
 
 
 @interface TOSMBSessionRemoveTask ()
@@ -24,7 +24,7 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
 {
-    TOSMBSessionWriteStream *stream = [TOSMBSessionWriteStream streamForPath:smbPath];
+    TOSMBSessionStream *stream = [TOSMBSessionStream streamForPath:smbPath];
     self = [super initWithSession:session stream:stream];
     return self;
 }
@@ -55,9 +55,8 @@
     if (weakOperation.isCancelled)
         return;
     __weak typeof(self) weakSelf = self;
-    TOSMBSessionWriteStream *writeStream = (TOSMBSessionWriteStream *)self.stream;
     
-    [writeStream removeItemWithSuccessBlock:^{
+    [self.stream removeItemWithSuccessBlock:^{
         [weakSelf didFinish];
     } failBlock:^(NSError *error) {
         [weakSelf didFailWithError:error];

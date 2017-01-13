@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 #import "bdsm.h"
 
+static const uint64_t TOSMBSessionStreamChunkSize = 65471;
+
 @class TOSMBSessionFile;
 
 typedef void(^TOSMBSessionStreamFailBlock)(NSError *error);
