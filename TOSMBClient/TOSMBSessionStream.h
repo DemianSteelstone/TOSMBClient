@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "bdsm.h"
 
-static const uint64_t TOSMBSessionStreamChunkSize = 65471;
+static const uint64_t TOSMBSessionStreamChunkSize = 65535;
 
 @class TOSMBSessionFile;
 
