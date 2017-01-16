@@ -149,12 +149,19 @@
     
     TOSMBSessionDownloadStream *downloadStream = (TOSMBSessionDownloadStream *)self.stream;
     
-    NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:self.destinationFilePath];
+    NSError *error = nil;
+    [[NSFileManager defaultManager] createFileAtPath:self.destinationFilePath contents:[NSData data] attributes:nil];
+    
+    NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingToURL:[NSURL fileURLWithPath:self.destinationFilePath] error:&error];
+    
+    if (error != nil)
+    {
+        [self didFailWithError:error];
+        return;
+    }
     
     uint64_t totalBytesRead = 0;
     uint64_t expectedSize = downloadStream.file.fileSize;
-    
-    NSError *error = nil;
     
     while (totalBytesRead < expectedSize) {
         NSData *data = [downloadStream readChunk:&error];

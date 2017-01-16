@@ -33,7 +33,7 @@
     }
     else
     {
-        TOSMBSessionFile *file = [self requestFileForItemAtPath:dstPath
+        TOSMBSessionFile *file = [self requestFileForItemAtPath:dst
                                                          inTree:self.treeID];
         if (successBlock)
             successBlock(file);
@@ -48,23 +48,19 @@
     NSInteger bufferSize = 65535;
     char *buffer = malloc(bufferSize);
     
-    @try {
-        bytesRead = smb_fread(self.smbSession, self.fileID, buffer, bufferSize);
-    } @catch (NSException *exception) {
-        *error = errorForErrorCode(TOSMBSessionErrorCodeUnknown);
-        
-    } @finally {
-        if (bytesRead < 0)
-        {
-            *error = errorForErrorCode(TOSMBSessionErrorCodeFileDownloadFailed);
-        }
+    bytesRead = smb_fread(self.smbSession, self.fileID, buffer, bufferSize);
+    if (bytesRead < 0)
+    {
+        *error = errorForErrorCode(TOSMBSessionErrorCodeFileDownloadFailed);
     }
-
+    
+    NSData *data = [NSData dataWithBytes:buffer length:(NSUInteger)bytesRead];
+    
     free(buffer);
     
     if (*error)
         return nil;
-    return [NSData dataWithBytes:buffer length:(NSUInteger)bytesRead];
+    return data;
 }
 
 #pragma mark -
@@ -90,7 +86,7 @@
     smb_fd fileID = 0;;
     //Open the file handle
     NSString *path = [self.path formattedFilePath];
-    smb_fopen(self.smbSession, self.treeID, [path cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
+    smb_fopen(self.smbSession, self.treeID, [path cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RO, &fileID);
     if (!fileID) {
         [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
         return NO;
