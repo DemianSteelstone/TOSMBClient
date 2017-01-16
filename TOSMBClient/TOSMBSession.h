@@ -29,6 +29,8 @@
 #import "TOSMBSessionUploadTask.h"
 #import "TOSMBSessionRemoveTask.h"
 #import "TOSMBSessionCreateFolderTask.h"
+#import "TOSMBSessionRenameTask.h"
+#import "TOSMBSessionCopyTask.h"
 
 @protocol TOSMBSessionDownloadTaskDelegate;
 
@@ -166,6 +168,23 @@
 -(TOSMBSessionCreateFolderTask *)createFolderAtPath:(NSString *)itemPath
                                   completionHandler:(TOSSMBSessionCreateFolderTaskSuccessBlock)completionHandler
                                         failHandler:(TOSMBSessionTaskFailBlock)failHandler;
+
+
+-(TOSMBSessionCopyTask *)copyItemFromPath:(NSString *)itemPath
+                                   toPath:(NSString *)dstPath
+                          progressHandler:(TOSMBSessionTaskProgressBlock)progresshandler
+                        completionHandler:(TOSMBSessionCopyTaskSuccessBlock)successHandler
+                              failHandler:(TOSMBSessionTaskFailBlock)failHandler;
+
+-(TOSMBSessionMoveTask *)moveItemFromPath:(NSString *)itemPath
+                                   toPath:(NSString *)dstPath
+                        completionHandler:(TOSMBSessionMoveTaskSuccessBlock)successHandler
+                              failHandler:(TOSMBSessionTaskFailBlock)failHandler;
+
+-(TOSMBSessionRenameTask *)renameItemAtPath:(NSString *)itemPath
+                                   withName:(NSString *)name
+                          completionHandler:(TOSMBSessionMoveTaskSuccessBlock)successHandler
+                                failHandler:(TOSMBSessionTaskFailBlock)failHandler;
 
 @end
 

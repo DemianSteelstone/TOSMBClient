@@ -22,6 +22,7 @@
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath
                         dstPath:(NSString *)dstPath
+                progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
                  successHandler:(TOSMBSessionCopyTaskSuccessBlock)successHandler
                     failHandler:(TOSMBSessionTaskFailBlock)failHandler;
 

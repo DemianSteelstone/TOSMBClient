@@ -51,12 +51,14 @@
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath
                         dstPath:(NSString *)dstPath
+                progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
                  successHandler:(TOSMBSessionCopyTaskSuccessBlock)successHandler
                     failHandler:(TOSMBSessionTaskFailBlock)failHandler
 {
     self = [self initWithSession:session
                       sourcePath:srcPath
                          dstPath:dstPath];
+    self.progressHandler = progressHandler;
     self.successHandler = successHandler;
     self.failHandler = failHandler;
     

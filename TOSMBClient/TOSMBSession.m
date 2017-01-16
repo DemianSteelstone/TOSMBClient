@@ -33,6 +33,8 @@
 #import "TOSMBSessionUploadTaskPrivate.h"
 #import "TOSMBSessionRemoveTaskPrivate.h"
 #import "TOSMBSessionCreateFolderTaskPrivate.h"
+#import "TOSMBSessionRenameTaskPrivate.h"
+#import "TOSMBSessinCopyTaskPrivate.h"
 
 #import "NSString+SMBNames.h"
 
@@ -480,6 +482,47 @@
                                                                                 successHandler:completionHandler
                                                                                    failHandler:failHandler];
     return task;
+}
+
+-(TOSMBSessionCopyTask *)copyItemFromPath:(NSString *)itemPath
+                                   toPath:(NSString *)dstPath
+                          progressHandler:(TOSMBSessionTaskProgressBlock)progresshandler
+                        completionHandler:(TOSMBSessionCopyTaskSuccessBlock)successHandler
+                              failHandler:(TOSMBSessionTaskFailBlock)failHandler
+{
+    TOSMBSessionCopyTask *copyTask = [[TOSMBSessionCopyTask alloc] initWithSession:self
+                                                                        sourcePath:itemPath
+                                                                           dstPath:dstPath
+                                                                   progressHandler:progresshandler
+                                                                    successHandler:successHandler
+                                                                       failHandler:failHandler];
+    return copyTask;
+}
+
+-(TOSMBSessionMoveTask *)moveItemFromPath:(NSString *)itemPath
+                                   toPath:(NSString *)dstPath
+                        completionHandler:(TOSMBSessionMoveTaskSuccessBlock)successHandler
+                              failHandler:(TOSMBSessionTaskFailBlock)failHandler
+{
+    TOSMBSessionMoveTask *moveTask = [[TOSMBSessionMoveTask alloc] initWithSession:self
+                                                                        sourcePath:itemPath
+                                                                           dstPath:dstPath
+                                                                    successHandler:successHandler
+                                                                       failHandler:failHandler];
+    return moveTask;
+}
+
+-(TOSMBSessionRenameTask *)renameItemAtPath:(NSString *)itemPath
+                                   withName:(NSString *)name
+                          completionHandler:(TOSMBSessionMoveTaskSuccessBlock)successHandler
+                                failHandler:(TOSMBSessionTaskFailBlock)failHandler
+{
+    TOSMBSessionRenameTask *renameTask = [[TOSMBSessionRenameTask alloc] initWithSession:self
+                                                                              sourcePath:itemPath
+                                                                                 newName:name
+                                                                          successHandler:successHandler
+                                                                             failHandler:failHandler];
+    return renameTask;
 }
 
 #pragma mark - Accessors -

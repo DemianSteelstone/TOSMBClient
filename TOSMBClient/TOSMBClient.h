@@ -20,6 +20,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 // -------------------------------------------------------------------------------
 
+#import <Foundation/Foundation.h>
+
 //! Project version number for TOSMBClient.
 FOUNDATION_EXPORT double TOSMBClientVersionNumber;
 
