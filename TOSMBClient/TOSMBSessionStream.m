@@ -72,14 +72,15 @@
 
 -(TOSMBSessionFile *)requestContent
 {
-    NSString *path = [self.path formattedFilePath];
-    return [self requestFileForItemAtPath:path
+    return [self requestFileForItemAtPath:self.path
                                    inTree:self.treeID];
 }
 
 - (TOSMBSessionFile *)requestFileForItemAtPath:(NSString *)filePath inTree:(smb_tid)treeID
 {
-    const char *fileCString = [filePath cStringUsingEncoding:NSUTF8StringEncoding];
+    NSString *path = [self.path formattedFilePath];
+    
+    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
     smb_stat fileStat = smb_fstat(self.smbSession, treeID, fileCString);
     if (!fileStat)
         return nil;
