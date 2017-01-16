@@ -23,19 +23,11 @@
     void *buffer = malloc(bufferSize);
     [data getBytes:buffer length:bufferSize];
     
-    @try {
-        bytesWritten = smb_fwrite(self.smbSession, self.fileID, buffer, bufferSize);
-    }
-    @catch (NSException *exception) {
-        free(buffer);
-        
-        *error = errorForErrorCode(TOSMBSessionErrorCodeUnknown);
-    } @finally {
-        
-        if (bytesWritten < 0)
-        {
-            *error = errorForErrorCode(bytesWritten);
-        }
+    bytesWritten = smb_fwrite(self.smbSession, self.fileID, buffer, bufferSize);
+    
+    if (bytesWritten < 0)
+    {
+        *error = errorForErrorCode(bytesWritten);
     }
     
     free(buffer);
