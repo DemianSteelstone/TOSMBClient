@@ -12,6 +12,7 @@
 
 - (NSString *)shareName;
 - (NSString *)stringByExcludingSharePath;
+- (NSString *)slashesEscape;
 - (NSString *)formattedFilePath;
 
 @end

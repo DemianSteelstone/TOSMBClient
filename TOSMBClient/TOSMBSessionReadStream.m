@@ -15,33 +15,6 @@
 
 #pragma mark -
 
--(void)moveItemToPath:(NSString *)dst
-         successBlock:(TOSMBSessionReadStreamMoveSuccessBlock)successBlock
-            failBlock:(TOSMBSessionStreamFailBlock)failBlock
-{
-    NSString *srcPath = [self.path formattedFilePath];
-    NSString *dstPath = [dst formattedFilePath];
-    
-    const char *srcPathCString = [srcPath cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *dstPathCString = [dstPath cStringUsingEncoding:NSUTF8StringEncoding];
-    
-    int result = smb_file_mv(self.smbSession,self.treeID,srcPathCString,dstPathCString);
-    if (result)
-    {
-        if (failBlock)
-            failBlock(errorForErrorCode(result));
-    }
-    else
-    {
-        TOSMBSessionFile *file = [self requestFileForItemAtPath:dst
-                                                         inTree:self.treeID];
-        if (successBlock)
-            successBlock(file);
-    }
-    
-    self.cleanupBlock();
-}
-
 -(NSData *)readChunk:(NSError *__autoreleasing *)error
 {
     int64_t bytesRead = 0;

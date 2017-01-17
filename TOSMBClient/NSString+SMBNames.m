@@ -53,11 +53,18 @@
     return path;
 }
 
+-(NSString *)slashesEscape
+{
+    NSString *formattedPath = [self copy];
+    formattedPath = [NSString stringWithFormat:@"\\%@",formattedPath];
+    formattedPath = [formattedPath stringByReplacingOccurrencesOfString:@"/" withString:@"\\\\"];
+    return formattedPath;
+}
+
 -(NSString *)formattedFilePath
 {
     NSString *formattedPath = [self stringByExcludingSharePath];
-    formattedPath = [NSString stringWithFormat:@"\\%@",formattedPath];
-    formattedPath = [formattedPath stringByReplacingOccurrencesOfString:@"/" withString:@"\\\\"];
+    formattedPath = [formattedPath slashesEscape];
     return formattedPath;
 }
 

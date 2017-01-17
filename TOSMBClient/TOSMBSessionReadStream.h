@@ -8,14 +8,8 @@
 
 #import "TOSMBSessionStream.h"
 
-typedef void(^TOSMBSessionReadStreamMoveSuccessBlock)(TOSMBSessionFile *item);
-
 @interface TOSMBSessionReadStream : TOSMBSessionStream
 
 -(NSData *)readChunk:(NSError **)error;
-
--(void)moveItemToPath:(NSString *)path
-         successBlock:(TOSMBSessionReadStreamMoveSuccessBlock)successBlock
-            failBlock:(TOSMBSessionStreamFailBlock)failBlock;
 
 @end

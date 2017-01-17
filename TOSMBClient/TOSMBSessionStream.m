@@ -28,16 +28,25 @@
     return [[self alloc] initWithPath:path];
 }
 
--(instancetype)initWithPath:(NSString *)path
++(instancetype)streamWithSession:(smb_session *)session path:(NSString *)path
+{
+    TOSMBSessionStream *stream = [[self alloc] initWithSession:session path:path];
+    return stream;
+}
+
+-(instancetype)initWithSession:(smb_session *)session path:(NSString *)path
 {
     self = [super init];
-    
     self.treeID = 0;
     self.fileID = 0;
-    _smbSession = smb_session_new();
-    
+    _smbSession = session;
     _path = path;
-    
+    return self;
+}
+
+-(instancetype)initWithPath:(NSString *)path
+{
+    self = [self initWithSession:smb_session_new() path:path];
     return self;
 }
 
@@ -78,9 +87,7 @@
 
 - (TOSMBSessionFile *)requestFileForItemAtPath:(NSString *)filePath inTree:(smb_tid)treeID
 {
-    NSString *path = [self.path formattedFilePath];
-    
-    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
+    const char *fileCString = self.path.formattedFilePath.UTF8String;
     smb_stat fileStat = smb_fstat(self.smbSession, treeID, fileCString);
     if (!fileStat)
         return nil;
@@ -94,7 +101,7 @@
 
 #pragma mark -
 
--(void)createFolderWithSuccessBlock:(TOSMBSessionStreamFolderCreateSuccessBlock)successBlock
+-(void)createFolderWithSuccessBlock:(TOSMBSessionStreamItemChangeSuccessBlock)successBlock
                           failBlock:(TOSMBSessionStreamFailBlock)failBlock
 {
     NSString *path = [self.path formattedFilePath];
@@ -120,6 +127,42 @@
             if (successBlock)
                 successBlock(file);
         }
+    }
+    
+    self.cleanupBlock();
+}
+
+-(void)moveItemToPath:(NSString *)dst
+         successBlock:(TOSMBSessionStreamItemChangeSuccessBlock)successBlock
+            failBlock:(TOSMBSessionStreamFailBlock)failBlock
+{
+    NSString *srcShare = [self.path shareName];
+    NSString *dstShare = [dst shareName];
+    
+    if ([srcShare isEqualToString:dstShare] == NO)
+    {
+        if (failBlock)
+            failBlock([NSError errorWithDomain:TOSMBClientErrorDomain code:-3 userInfo:@{
+                                                                                         NSLocalizedDescriptionKey : @"You can't move files between different shares",
+                                                                                         }]);
+        return;
+    }
+    
+    NSString *srcPath = [self.path formattedFilePath];
+    NSString *dstPath = [dst formattedFilePath];
+    
+    int result = smb_file_mv(self.smbSession,self.treeID,srcPath.UTF8String,dstPath.UTF8String);
+    if (result != 0)
+    {
+        if (failBlock)
+            failBlock(errorForErrorCode(result));
+    }
+    else
+    {
+        TOSMBSessionFile *file = [self requestFileForItemAtPath:dst
+                                                         inTree:self.treeID];
+        if (successBlock)
+            successBlock(file);
     }
     
     self.cleanupBlock();

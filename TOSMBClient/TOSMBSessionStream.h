@@ -14,7 +14,7 @@ static const uint64_t TOSMBSessionStreamChunkSize = 65400;
 @class TOSMBSessionFile;
 
 typedef void(^TOSMBSessionStreamFailBlock)( NSError* _Nonnull error);
-typedef void(^TOSMBSessionStreamFolderCreateSuccessBlock)( TOSMBSessionFile * _Nonnull folder);
+typedef void(^TOSMBSessionStreamItemChangeSuccessBlock)( TOSMBSessionFile * _Nonnull folder);
 
 @interface TOSMBSessionStream : NSObject
 
@@ -34,6 +34,7 @@ typedef void(^TOSMBSessionStreamFolderCreateSuccessBlock)( TOSMBSessionFile * _N
 @property (nonatomic, getter=isClosed, readonly) BOOL closed;
 
 + (_Nonnull instancetype)streamForPath:(NSString * _Nonnull )path;
++ (_Nonnull instancetype)streamWithSession:(smb_session * _Nonnull)session path:(NSString * _Nonnull)path;
 
 - (_Nonnull instancetype)initWithPath:(NSString * _Nonnull )path;
 
@@ -48,8 +49,12 @@ typedef void(^TOSMBSessionStreamFolderCreateSuccessBlock)( TOSMBSessionFile * _N
 
 
 
--(void)createFolderWithSuccessBlock:(_Nullable TOSMBSessionStreamFolderCreateSuccessBlock)successBlock
+-(void)createFolderWithSuccessBlock:(_Nullable TOSMBSessionStreamItemChangeSuccessBlock)successBlock
                           failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
+
+-(void)moveItemToPath:( NSString * _Nonnull )path
+         successBlock:(_Nullable TOSMBSessionStreamItemChangeSuccessBlock)successBlock
+            failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
 
 -(void)removeItemWithSuccessBlock:(_Nullable dispatch_block_t)successBlock
                         failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;

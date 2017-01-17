@@ -28,7 +28,7 @@
 {
     
     TOSMBSessionReadStream *readStream = [TOSMBSessionReadStream streamForPath:srcPath];
-    TOSMBSessionWriteStream *writeStream = [TOSMBSessionWriteStream streamForPath:dstPath];
+    TOSMBSessionWriteStream *writeStream = [TOSMBSessionWriteStream streamWithSession:readStream.smbSession path:dstPath];
     
     self = [super initWithSession:session stream:readStream];
     _writeStream = writeStream;
@@ -73,7 +73,7 @@
     __weak typeof(self) weakSelf = self;
     
     [self.writeStream openStream:^{
-        
+        [weakSelf startCopyWithOperation:weakOperation];
     } failBlock:^(NSError *error) {
         [weakSelf didFailWithError:error];
     }];
