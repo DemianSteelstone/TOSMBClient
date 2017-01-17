@@ -163,10 +163,10 @@
 
 - (NSError *)attemptConnectionWithSessionPointer:(smb_session *)session
 {
-    //There's no point in attempting a potentially costly TCP attempt if we're not even on a local network.
-    if ([self deviceIsOnWiFi] == NO) {
-        return errorForErrorCode(TOSMBSessionErrorNotOnWiFi);
-    }
+//    //There's no point in attempting a potentially costly TCP attempt if we're not even on a local network.
+//    if ([self deviceIsOnWiFi] == NO) {
+//        return errorForErrorCode(TOSMBSessionErrorNotOnWiFi);
+//    }
     
     // If we're connecting from a download task, and the sessions match, make sure to
     // refresh them periodically
