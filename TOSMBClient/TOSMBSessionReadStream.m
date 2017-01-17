@@ -24,7 +24,7 @@
     bytesRead = smb_fread(self.smbSession, self.fileID, buffer, bufferSize);
     if (bytesRead < 0)
     {
-        *error = errorForErrorCode(TOSMBSessionErrorCodeFileDownloadFailed);
+        *error = errorForErrorCode(TOSMBSessionErrorCodeFileReadFailed);
     }
     
     NSData *data = [NSData dataWithBytes:buffer length:(NSUInteger)bytesRead];

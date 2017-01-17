@@ -154,6 +154,8 @@
     int result = smb_file_mv(self.smbSession,self.treeID,srcPath.UTF8String,dstPath.UTF8String);
     if (result != 0)
     {
+        
+        
         if (failBlock)
             failBlock(errorForErrorCode(result));
     }
@@ -196,6 +198,31 @@
             successBlock();
     }
     self.cleanupBlock();
+}
+
+-(NSError *)errorForResult:(int)result
+{
+    NSInteger errorCode = TOSMBSessionErrorCodeUnknown;
+    NSString * errorDescription = localizedStringForErrorCode(errorCode);
+    
+    if (result == DSM_ERROR_NETWORK)
+    {
+        errorCode = -3;
+        errorDescription = @"Undefined network error";
+    }
+    else if (result == DSM_ERROR_NT)
+    {
+        errorCode = -2;
+        uint32_t status = smb_session_get_nt_status(self.smbSession);
+        NSString *statusMessage = localizedStatusCode(status);
+        errorDescription = [NSString stringWithFormat:@"NT status:%@",statusMessage];
+    }
+    
+    return [NSError errorWithDomain:TOSMBClientErrorDomain
+                               code:errorCode
+                           userInfo:@{
+                                      NSLocalizedDescriptionKey : errorDescription,
+                                      }];
 }
 
 #pragma mark -
