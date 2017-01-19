@@ -146,8 +146,15 @@
     
     TOSMBSessionDownloadStream *downloadStream = (TOSMBSessionDownloadStream *)self.stream;
     
-    NSError *error = nil;
-    [[NSFileManager defaultManager] createFileAtPath:self.destinationFilePath contents:[NSData data] attributes:nil];
+   NSError *error = nil;
+    
+    NSData *data = [NSData data];
+    [data writeToFile:self.destinationFilePath options:NSDataWritingAtomic error:&error];
+    if (error != nil)
+    {
+        [self didFailWithError:error];
+        return;
+    }
     
     NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingToURL:[NSURL fileURLWithPath:self.destinationFilePath] error:&error];
     
@@ -175,12 +182,12 @@
             //Save them to the file handle (And ensure the NSData object is flushed immediately)
             [fileHandle writeData:data];
             
-            //Ensure the data is properly written to disk before proceeding
-            [fileHandle synchronizeFile];
-            
             [self didDownloadBytes:bytesRead totalBytesDownloaded:totalBytesRead totalBytesExpected:expectedSize];
         }
     };
+    
+    //Ensure the data is properly written to disk before proceeding
+    [fileHandle synchronizeFile];
     
     [fileHandle closeFile];
     
