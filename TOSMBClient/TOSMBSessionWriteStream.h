@@ -12,6 +12,6 @@
 
 @interface TOSMBSessionWriteStream : TOSMBSessionStream
 
--(void)writeData:(NSData *)data error:(NSError**)error;
+-(uint64_t)writeData:(NSData *)data error:(NSError**)error;
 
 @end

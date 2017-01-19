@@ -16,7 +16,7 @@
 
 #pragma mark -
 
--(void)writeData:(NSData *)data error:(NSError**)error
+-(uint64_t)writeData:(NSData *)data error:(NSError**)error
 {
     ssize_t bytesWritten = 0;
     NSUInteger bufferSize = data.length;
@@ -25,12 +25,18 @@
     
     bytesWritten = smb_fwrite(self.smbSession, self.fileID, buffer, bufferSize);
     
+    if (bytesWritten == 0)
+    {
+        NSLog(@"Not written");
+    }
+    
     if (bytesWritten < 0)
     {
         *error = errorForErrorCode(bytesWritten);
     }
     
     free(buffer);
+    return bytesWritten;
 }
 
 #pragma mark -
@@ -48,7 +54,7 @@
     smb_fd fileID = 0;;
     //Open the file handle
     NSString *path = [self.path formattedFilePath];
-    smb_fopen(self.smbSession, self.treeID, [path cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RW, &fileID);
+    smb_fopen(self.smbSession, self.treeID, path.UTF8String, SMB_MOD_RW, &fileID);
     if (!fileID) {
         [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
         return NO;

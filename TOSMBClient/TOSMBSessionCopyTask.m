@@ -83,17 +83,16 @@
 {
     NSError *error = nil;
     
-    uint64_t totalBytesRead = 0;
+    uint64_t totalBytesWritten = 0;
     uint64_t expectedSize = self.stream.file.fileSize;
     
     TOSMBSessionReadStream *readStream = (TOSMBSessionReadStream *)self.stream;
     
-    while (totalBytesRead < expectedSize) {
+    while (totalBytesWritten < expectedSize) {
         
         if (weakOperation.isCancelled)
         {
-            readStream.cleanupBlock();
-            self.writeStream.cleanupBlock();
+            [self end];
             return;
         }
         
@@ -103,9 +102,7 @@
             break;
         }
         
-        totalBytesRead += data.length;
-        
-        [self.writeStream writeData:data error:&error];
+        totalBytesWritten += [self.writeStream writeData:data error:&error];
         
         if (error)
         {
@@ -113,7 +110,7 @@
         }
         
         [self didCopyBytes:data.length
-          totalCopiedBytes:totalBytesRead
+          totalCopiedBytes:totalBytesWritten
               expectedSize:expectedSize];
     }
     
@@ -126,6 +123,14 @@
         TOSMBSessionFile *file = [self.writeStream requestContent];
         [self didFinishWithItem:file];
     }
+    
+    [self end];
+}
+
+-(void)end
+{
+    self.stream.cleanupBlock();
+//    self.writeStream.cleanupBlock();
 }
 
 - (void)didFinishWithItem:(TOSMBSessionFile *)item {
