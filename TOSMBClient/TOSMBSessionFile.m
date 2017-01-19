@@ -64,7 +64,7 @@
     return self;
 }
 
-- (instancetype)initWithStat:(smb_stat)stat session:(TOSMBSession *)session parentDirectoryFilePath:(NSString *)path
+- (instancetype)initWithStat:(smb_stat)stat session:(TOSMBSession *)session filePath:(NSString *)path
 {
     if (stat == NULL)
         return nil;
@@ -85,7 +85,7 @@
         _modificationTime = [self dateFromLDAPTimeStamp:_modificationTimestamp];
         _creationTime = [self dateFromLDAPTimeStamp:_creationTimestamp];
         
-        _filePath = [path stringByAppendingPathComponent:_name];
+        _filePath = path;
     }
     
     return self;

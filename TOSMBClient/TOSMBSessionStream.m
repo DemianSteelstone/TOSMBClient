@@ -92,7 +92,9 @@
     if (!fileStat)
         return nil;
     
-    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat session:nil parentDirectoryFilePath:filePath];
+    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat
+                                                            session:nil
+                                                           filePath:filePath];
     
     smb_stat_destroy(fileStat);
     

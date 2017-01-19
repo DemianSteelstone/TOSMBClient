@@ -274,7 +274,7 @@
         return nil;
     }
 
-    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat session:self parentDirectoryFilePath:fixedPath.stringByDeletingLastPathComponent];
+    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat session:self filePath:fixedPath];
 
     smb_stat_destroy(fileStat);
     smb_tree_disconnect(self.session, shareIdentifier);
@@ -371,7 +371,13 @@
             continue;
         }
         
-        TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:item session:self parentDirectoryFilePath:path];
+        NSString *nameStr = [[NSString alloc] initWithBytes:name length:strlen(name) encoding:NSUTF8StringEncoding];
+        
+        NSString *pathWithName = [path stringByAppendingPathComponent:nameStr];
+        
+        TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:item
+                                                                session:self
+                                                               filePath:pathWithName];
         [fileList addObject:file];
     }
     smb_stat_list_destroy(statList);
