@@ -29,10 +29,6 @@
 
 @property (nonatomic, strong, readwrite) NSString *sourceFilePath;
 @property (nonatomic, strong, readwrite) NSString *destinationFilePath;
-@property (nonatomic, strong) NSString *tempFilePath;
-
-@property (assign, readwrite) int64_t countOfBytesReceived;
-@property (assign, readwrite) int64_t countOfBytesExpectedToReceive;
 
 /** Feedback handlers */
 @property (nonatomic, weak) id<TOSMBSessionDownloadTaskDelegate> delegate;
@@ -129,12 +125,13 @@
 {
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         if (self.delegate && [self.delegate respondsToSelector:@selector(downloadTask:didWriteBytes:totalBytesReceived:totalBytesExpectedToReceive:)])
-            [self.delegate downloadTask:self didWriteBytes:bytesWritten
-                     totalBytesReceived:self.countOfBytesReceived
-            totalBytesExpectedToReceive:self.countOfBytesExpectedToReceive];
+            [self.delegate downloadTask:self
+                          didWriteBytes:bytesWritten
+                     totalBytesReceived:totalBytesWritten
+            totalBytesExpectedToReceive:totalBytesExpected];
         
         if (self.progressHandler)
-            self.progressHandler(self.countOfBytesReceived, self.countOfBytesExpectedToReceive);
+            self.progressHandler(totalBytesWritten, totalBytesExpected);
     }];
 }
 
