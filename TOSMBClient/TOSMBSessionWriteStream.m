@@ -16,7 +16,7 @@
 
 #pragma mark -
 
--(uint64_t)writeData:(NSData *)data error:(NSError**)error
+-(ssize_t)writeData:(NSData *)data error:(NSError**)error
 {
     ssize_t bytesWritten = 0;
     NSUInteger bufferSize = data.length;
@@ -24,11 +24,6 @@
     [data getBytes:buffer length:bufferSize];
     
     bytesWritten = smb_fwrite(self.smbSession, self.fileID, buffer, bufferSize);
-    
-    if (bytesWritten == 0)
-    {
-        NSLog(@"Not written");
-    }
     
     if (bytesWritten < 0)
     {

@@ -18,7 +18,7 @@
 -(NSData *)readChunk:(NSError *__autoreleasing *)error
 {
     int64_t bytesRead = 0;
-    NSInteger bufferSize = 65471;
+    NSInteger bufferSize = 64000;
     char *buffer = malloc(bufferSize);
     
     bytesRead = smb_fread(self.smbSession, self.fileID, buffer, bufferSize);
