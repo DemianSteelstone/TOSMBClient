@@ -10,6 +10,6 @@
 
 @interface TOSMBSessionReadStream : TOSMBSessionStream
 
--(NSData *)readChunk:(NSError **)error;
+-( NSData * _Nullable )readChunk:( NSError * _Nullable __autoreleasing * _Nullable)error;
 
 @end

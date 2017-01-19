@@ -70,6 +70,9 @@
 		22FA849A1DC0996900634DB7 /* TOSMBSessionFilePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 22FA84981DC0996900634DB7 /* TOSMBSessionFilePrivate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5E391C361E27A7A800C35B01 /* TOSMBSessionRemoveTask.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E391C341E27A7A800C35B01 /* TOSMBSessionRemoveTask.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5E391C371E27A7A800C35B01 /* TOSMBSessionRemoveTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E391C351E27A7A800C35B01 /* TOSMBSessionRemoveTask.m */; };
+		5E3CA2911E30BAD60077D890 /* TOSMBSessionDeleteStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E3CA28F1E30BAD60077D890 /* TOSMBSessionDeleteStream.h */; };
+		5E3CA2921E30BAD60077D890 /* TOSMBSessionDeleteStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E3CA2901E30BAD60077D890 /* TOSMBSessionDeleteStream.m */; };
+		5E3CA2931E30BAD60077D890 /* TOSMBSessionDeleteStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E3CA2901E30BAD60077D890 /* TOSMBSessionDeleteStream.m */; };
 		5E7BF3851E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E7BF3841E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		5E7BF3881E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E7BF3861E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5E7BF3891E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E7BF3871E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.m */; };
@@ -170,6 +173,8 @@
 		22FA84981DC0996900634DB7 /* TOSMBSessionFilePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionFilePrivate.h; sourceTree = "<group>"; };
 		5E391C341E27A7A800C35B01 /* TOSMBSessionRemoveTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionRemoveTask.h; sourceTree = "<group>"; };
 		5E391C351E27A7A800C35B01 /* TOSMBSessionRemoveTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOSMBSessionRemoveTask.m; sourceTree = "<group>"; };
+		5E3CA28F1E30BAD60077D890 /* TOSMBSessionDeleteStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionDeleteStream.h; sourceTree = "<group>"; };
+		5E3CA2901E30BAD60077D890 /* TOSMBSessionDeleteStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOSMBSessionDeleteStream.m; sourceTree = "<group>"; };
 		5E7BF3841E27AA72000E0AA0 /* TOSMBSessionRemoveTaskPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionRemoveTaskPrivate.h; sourceTree = "<group>"; };
 		5E7BF3861E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOSMBSessionCreateFolderTask.h; sourceTree = "<group>"; };
 		5E7BF3871E27B1BB000E0AA0 /* TOSMBSessionCreateFolderTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOSMBSessionCreateFolderTask.m; sourceTree = "<group>"; };
@@ -430,6 +435,8 @@
 				5E7BF3C91E28BB87000E0AA0 /* TOSMBSessionWriteStream.m */,
 				5E7BF3D31E28BE32000E0AA0 /* TOSMBSessionDownloadStream.h */,
 				5E7BF3D41E28BE32000E0AA0 /* TOSMBSessionDownloadStream.m */,
+				5E3CA28F1E30BAD60077D890 /* TOSMBSessionDeleteStream.h */,
+				5E3CA2901E30BAD60077D890 /* TOSMBSessionDeleteStream.m */,
 			);
 			name = Streams;
 			sourceTree = "<group>";
@@ -449,6 +456,7 @@
 				229EC8781CF3240B0007FE4A /* netbios_defs.h in Headers */,
 				5E7BF3B51E28AD5C000E0AA0 /* TOSMBSessionRenameTask.h in Headers */,
 				229EC87A1CF3240B0007FE4A /* smb_defs.h in Headers */,
+				5E3CA2911E30BAD60077D890 /* TOSMBSessionDeleteStream.h in Headers */,
 				229EC8801CF3240B0007FE4A /* smb_types.h in Headers */,
 				5E7BF3DF1E28D779000E0AA0 /* TOSMBSessionCopyTask.h in Headers */,
 				5E391C361E27A7A800C35B01 /* TOSMBSessionRemoveTask.h in Headers */,
@@ -652,6 +660,7 @@
 				5E7BF3AB1E27C281000E0AA0 /* TOSMBSessionCreateFolderTask.m in Sources */,
 				5E7BF3D61E28BE32000E0AA0 /* TOSMBSessionDownloadStream.m in Sources */,
 				E842C6BF1DDA480B0017A7AD /* TOSMBSessionUploadTask.m in Sources */,
+				5E3CA2921E30BAD60077D890 /* TOSMBSessionDeleteStream.m in Sources */,
 				22CB5AEB1B78929B006F05F2 /* TORootViewController.m in Sources */,
 				2214DCFC1B66847B003E3EF1 /* TOSMBConstants.m in Sources */,
 			);
@@ -679,6 +688,7 @@
 				224899571DC0A642006CA7B3 /* TONetBIOSNameServiceEntry.m in Sources */,
 				5E391C371E27A7A800C35B01 /* TOSMBSessionRemoveTask.m in Sources */,
 				5E7BF3E11E28D779000E0AA0 /* TOSMBSessionCopyTask.m in Sources */,
+				5E3CA2931E30BAD60077D890 /* TOSMBSessionDeleteStream.m in Sources */,
 				E8431A091DCD53DD0007BCFA /* TOSMBSessionUploadTask.m in Sources */,
 				5E7BF3B71E28AD5C000E0AA0 /* TOSMBSessionRenameTask.m in Sources */,
 				5E7BF3B01E28A931000E0AA0 /* TOSMBSessionMoveTask.m in Sources */,

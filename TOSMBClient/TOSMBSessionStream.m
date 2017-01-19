@@ -172,36 +172,6 @@
     self.cleanupBlock();
 }
 
--(void)removeItemWithSuccessBlock:(dispatch_block_t)successBlock
-                        failBlock:(TOSMBSessionStreamFailBlock)failBlock
-{
-    NSString *path = [self.path formattedFilePath];
-    const char *fileCString = [path cStringUsingEncoding:NSUTF8StringEncoding];
-    
-    int result = 0;
-    
-    if (self.file.directory)
-    {
-        result = smb_directory_rm(self.smbSession,self.treeID,fileCString);
-    }
-    else
-    {
-        result = smb_file_rm(self.smbSession,self.treeID,fileCString);
-    }
-    
-    if (result)
-    {
-        if (failBlock)
-            failBlock(errorForErrorCode(result));
-    }
-    else
-    {
-        if (successBlock)
-            successBlock();
-    }
-    self.cleanupBlock();
-}
-
 -(NSError *)errorForResult:(int)result
 {
     NSInteger errorCode = TOSMBSessionErrorCodeUnknown;

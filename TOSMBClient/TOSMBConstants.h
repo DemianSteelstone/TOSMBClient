@@ -37,6 +37,7 @@ typedef NS_ENUM(NSInteger, TOSMBSessionErrorCode)
     TOSMBSessionErrorCodeDirectoryDownloaded = 1006,                /* A directory was attempted to be downloaded. */
     TOSMBSessionErrorCodeFileReadFailed = 1007,                     /* The file could not be readed, possible network error. */
     TOSMBSessionErrorCodeFileWriteFailed = 1008,                    /* The file could not be writed, possible network error. */
+    TOSMBSessionErrorCodeDeleteFailed = 1009,
 
 };
 
