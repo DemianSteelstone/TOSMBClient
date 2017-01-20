@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "TOSMBSessionStream.h"
+#import "TOSMBSessionStreamPrivate.h"
 #import "TOSMBConstants.h"
 
 #import "NSString+SMBNames.h"

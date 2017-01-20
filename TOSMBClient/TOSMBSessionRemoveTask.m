@@ -8,6 +8,7 @@
 
 #import "TOSMBSessionRemoveTaskPrivate.h"
 #import "TOSMBSessionDeleteStream.h"
+#import "TOSMBSessionStreamPrivate.h"
 
 @interface TOSMBSessionRemoveTask ()
 

@@ -8,6 +8,7 @@
 
 #import "TOSMBSessionCreateFolderTaskPrivate.h"
 #import "TOSMBSessionStream.h"
+#import "TOSMBSessionStreamPrivate.h"
 
 @interface TOSMBSessionCreateFolderTask ()
 

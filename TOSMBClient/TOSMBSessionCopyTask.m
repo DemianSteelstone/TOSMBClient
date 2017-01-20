@@ -9,6 +9,7 @@
 #import "TOSMBSessinCopyTaskPrivate.h"
 #import "TOSMBSessionReadStream.h"
 #import "TOSMBSessionWriteStream.h"
+#import "TOSMBSessionStreamPrivate.h"
 
 @interface TOSMBSessionCopyTask ()
 

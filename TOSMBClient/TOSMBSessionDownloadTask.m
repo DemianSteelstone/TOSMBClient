@@ -22,6 +22,7 @@
 
 #import "TOSMBSessionDownloadTaskPrivate.h"
 #import "TOSMBSessionDownloadStream.h"
+#import "TOSMBSessionStreamPrivate.h"
 
 // -------------------------------------------------------------------------
 

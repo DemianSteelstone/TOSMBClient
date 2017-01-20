@@ -7,6 +7,7 @@
 //
 
 #import "TOSMBSessionDeleteStream.h"
+#import "TOSMBSessionStreamPrivate.h"
 
 #import "NSString+SMBNames.h"
 #import "TOSMBConstants.h"

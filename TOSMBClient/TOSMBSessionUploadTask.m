@@ -23,6 +23,7 @@
 #import "TOSMBSessionUploadTaskPrivate.h"
 #import "TOSMBSessionPrivate.h"
 #import "TOSMBSessionWriteStream.h"
+#import "TOSMBSessionStreamPrivate.h"
 
 @interface TOSMBSessionUploadTask ()
 

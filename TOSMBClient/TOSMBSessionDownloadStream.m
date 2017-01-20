@@ -7,6 +7,7 @@
 //
 
 #import "TOSMBSessionDownloadStream.h"
+#import "TOSMBSessionStreamPrivate.h"
 #import "TOSMBSessionFile.h"
 #import "TOSMBConstants.h"
 

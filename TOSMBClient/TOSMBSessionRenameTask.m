@@ -7,6 +7,7 @@
 //
 
 #import "TOSMBSessionRenameTaskPrivate.h"
+#import "TOSMBSessionStreamPrivate.h"
 
 @implementation TOSMBSessionRenameTask
 

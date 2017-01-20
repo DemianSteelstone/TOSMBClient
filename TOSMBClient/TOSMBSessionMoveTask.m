@@ -8,6 +8,7 @@
 
 #import "TOSMBSessionMoveTaskPrivate.h"
 #import "TOSMBSessionReadStream.h"
+#import "TOSMBSessionStreamPrivate.h"
 
 @interface TOSMBSessionMoveTask ()
 

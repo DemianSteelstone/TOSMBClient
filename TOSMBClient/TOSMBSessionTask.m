@@ -21,6 +21,11 @@
 // -------------------------------------------------------------------------------
 
 #import "TOSMBSessionTaskPrivate.h"
+#import "TOSMBSessionStreamPrivate.h"
+
+@interface TOSMBSessionTask ()
+
+@end
 
 @implementation TOSMBSessionTask
 
