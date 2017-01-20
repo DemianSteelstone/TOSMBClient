@@ -34,6 +34,12 @@
     return stream;
 }
 
+-(instancetype)initWithPath:(NSString *)path
+{
+    self = [self initWithSession:smb_session_new() path:path];
+    return self;
+}
+
 -(instancetype)initWithSession:(smb_session *)session path:(NSString *)path
 {
     self = [super init];
@@ -44,22 +50,10 @@
     return self;
 }
 
--(instancetype)initWithPath:(NSString *)path
-{
-    self = [self initWithSession:smb_session_new() path:path];
-    return self;
-}
-
 #pragma mark -
 
 - (dispatch_block_t)cleanupBlock {
     return ^{
-        
-        //Release the background task handler, making the app eligible to be suspended now
-        if (self.backgroundTaskIdentifier) {
-            [[UIApplication sharedApplication] endBackgroundTask:self.backgroundTaskIdentifier];
-            self.backgroundTaskIdentifier = 0;
-        }
         
         if (self.treeID) {
             smb_tree_disconnect(self.smbSession, self.treeID);
@@ -68,7 +62,6 @@
         if (self.smbSession && self.fileID) {
             smb_fclose(self.smbSession, self.fileID);
         }
-        
         
         if (self.smbSession) {
             smb_session_destroy(self.smbSession);
@@ -153,10 +146,10 @@
     NSString *srcPath = [self.path formattedFilePath];
     NSString *dstPath = [dst formattedFilePath];
     
-    int result = smb_file_mv(self.smbSession,self.treeID,srcPath.UTF8String,dstPath.UTF8String);
+    uint32_t result = smb_file_mv(self.smbSession,self.treeID,srcPath.UTF8String,dstPath.UTF8String);
     if (result != 0)
     {
-        
+        uint32_t status = smb_session_get_nt_status(self.smbSession);
         
         if (failBlock)
             failBlock(errorForErrorCode(result));

@@ -30,9 +30,6 @@ typedef void(^TOSMBSessionStreamItemChangeSuccessBlock)( TOSMBSessionFile * _Non
          successBlock:(_Nullable TOSMBSessionStreamItemChangeSuccessBlock)successBlock
             failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
 
-- (void)removeItemWithSuccessBlock:(_Nullable dispatch_block_t)successBlock
-                        failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
-
 - (void)close;
 
 @end

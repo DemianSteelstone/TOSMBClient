@@ -20,8 +20,6 @@ static const uint64_t TOSMBSessionStreamChunkSize = 64000;
 @property (nonatomic) smb_fd fileID;
 @property (nonatomic, assign, nullable) smb_session *smbSession;
 
-@property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskIdentifier;
-
 @property (nonatomic, readonly, nonnull) dispatch_block_t cleanupBlock;
 
 @property (nonatomic, getter=isOpened, readonly) BOOL opened;
