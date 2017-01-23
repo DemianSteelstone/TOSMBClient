@@ -135,21 +135,24 @@ totalBytesExpectedToSend:(long long)totalBytesExpectedToSend {
     ssize_t totalBytesWritten = 0;
     NSError *error = nil;
     
-    while (((data = [fileHandle readDataOfLength: TOSMBSessionStreamChunkSize]).length > 0))
+    if ([writeStream open:&error])
     {
-        [writeStream writeData:data error:&error];
-        
-        if (self.isCanceled || error)
+        while (((data = [fileHandle readDataOfLength: TOSMBSessionStreamChunkSize]).length > 0))
         {
-            break;
+            [writeStream writeData:data error:&error];
+            
+            if (self.isCanceled || error)
+            {
+                break;
+            }
+            
+            NSUInteger bufferSize = data.length;
+            totalBytesWritten += bufferSize;
+            
+            [self didSendBytes:bufferSize totalBytesSent:totalBytesWritten totalBytesExpectedToSend:expectedSize];
         }
-        
-        NSUInteger bufferSize = data.length;
-        totalBytesWritten += bufferSize;
-        
-        [self didSendBytes:bufferSize totalBytesSent:totalBytesWritten totalBytesExpectedToSend:expectedSize];
-        
     }
+    
     if (error)
     {
         [self didFailWithError:error];

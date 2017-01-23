@@ -81,7 +81,7 @@
 
 -(uint32_t)permissions
 {
-    return 0;
+    return SMB_MOD_RW;
 }
 
 -(BOOL)openFile:(NSError **)error

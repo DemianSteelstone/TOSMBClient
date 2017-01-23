@@ -41,4 +41,9 @@
     return SMB_MOD_RW;
 }
 
+-(BOOL)findTargetFile:(NSError *__autoreleasing *)error
+{
+    return YES;
+}
+
 @end
