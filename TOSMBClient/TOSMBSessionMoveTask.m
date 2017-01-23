@@ -7,13 +7,16 @@
 //
 
 #import "TOSMBSessionMoveTaskPrivate.h"
-#import "TOSMBSessionReadStream.h"
+
 #import "TOSMBSessionStreamPrivate.h"
+#import "TOSMBShare.h"
+#import "NSString+SMBNames.h"
 
 @interface TOSMBSessionMoveTask ()
 
 @property (nonatomic, weak) id <TOSMBSessionMoveTaskDelegate> delegate;
 @property (nonatomic, copy) TOSMBSessionMoveTaskSuccessBlock successHandler;
+@property (nonatomic, strong) NSString *srcPath;
 @property (nonatomic, strong) NSString *dstPath;
 
 @end
@@ -22,22 +25,14 @@
 
 @dynamic delegate;
 
--(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
+-(instancetype)initWithSession:(TOSMBSession *)session
+                    sourcePath:(NSString *)srcPath
+                       dstPath:(NSString *)dstPath
 {
-    TOSMBSessionReadStream *stream = [TOSMBSessionReadStream streamForPath:smbPath];
-    self = [super initWithSession:session stream:stream];
-    return self;
-}
-
-- (instancetype)initWithSession:(TOSMBSession *)session
-                     sourcePath:(NSString *)srcPath
-                        dstPath:(NSString *)dstPath
-{
-    if ((self = [self initWithSession:session path:srcPath])) {
-        
-        _dstPath = dstPath;
-    }
-    
+    TOSMBShare *share = [[TOSMBShare alloc] initWithShareName:srcPath.shareName];
+    self = [super initWithSession:session share:share];
+    _srcPath = srcPath;
+    _dstPath = dstPath;
     return self;
 }
 
@@ -45,9 +40,8 @@
                      sourcePath:(NSString *)srcPath
                         dstPath:(NSString *)dstPath
                        delegate:(id<TOSMBSessionMoveTaskDelegate>)delegate {
-    if ((self = [self initWithSession:session sourcePath:srcPath dstPath:dstPath])) {
-        self.delegate = delegate;
-    }
+    self = [self initWithSession:session sourcePath:srcPath dstPath:dstPath];
+    self.delegate = delegate;
     
     return self;
 }
@@ -57,28 +51,23 @@
                         dstPath:(NSString *)dstPath
                  successHandler:(TOSMBSessionMoveTaskSuccessBlock)successHandler
                     failHandler:(TOSMBSessionTaskFailBlock)failHandler {
-    if ((self = [self initWithSession:session sourcePath:srcPath dstPath:dstPath])) {
-        self.successHandler = successHandler;
-        self.failHandler = failHandler;
-    }
-    
+    self = [self initWithSession:session sourcePath:srcPath dstPath:dstPath];
+    self.successHandler = successHandler;
+    self.failHandler = failHandler;
     return self;
 }
 
--(void)performTaskWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(void)performTask
 {
-    if (weakOperation.isCancelled)
-        return;
-    
     __weak typeof(self) weakSelf = self;
-    TOSMBSessionReadStream *writeStream = (TOSMBSessionReadStream *)self.stream;
     
-    [writeStream moveItemToPath:_dstPath
-                   successBlock:^(TOSMBSessionFile *folder){
-                       [weakSelf didFinishWithItem:folder];
-                   } failBlock:^(NSError *error) {
-                       [weakSelf didFailWithError:error];
-                   }];
+    [self.share moveItemFromPath:self.srcPath
+                          toPath:self.dstPath
+                    successBlock:^(TOSMBSessionFile * _Nonnull item) {
+                        [weakSelf didFinishWithItem:item];
+                    } failBlock:^(NSError * _Nonnull error) {
+                        [weakSelf didFailWithError:error];
+                    }];
 }
 
 - (void)didFinishWithItem:(TOSMBSessionFile *)item {
@@ -86,7 +75,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([weakSelf.delegate respondsToSelector:@selector(moveTask:didFinishMove:)]) {
             [weakSelf.delegate moveTask:weakSelf
-                                didFinishMove:item];
+                          didFinishMove:item];
         }
         if (weakSelf.successHandler) {
             weakSelf.successHandler(item);

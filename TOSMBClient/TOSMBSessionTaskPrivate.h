@@ -36,17 +36,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol TOSMBSessionConcreteTask <NSObject>
 
-- (void)performTaskWithOperation:(__weak NSBlockOperation *)weakOperation;
+- (void)performTask;
 
 @end
+
+@class TOSMBShare;
 
 @interface TOSMBSessionTask ()
 
 @property (nonatomic, weak) TOSMBSession *session;
-@property (nonatomic, strong) TOSMBSessionStream *stream;
-
-
-@property (nonatomic, assign) TOSMBSessionTaskState state;
+@property (nonatomic, strong) TOSMBShare *share;
+@property (nonatomic) TOSMBSessionTaskState state;
 
 @property (nonatomic, strong, null_resettable) NSBlockOperation *taskOperation;
 /** Feedback handlers */
@@ -54,7 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) TOSMBSessionTaskProgressBlock progressHandler;
 @property (nonatomic, copy) TOSMBSessionTaskFailBlock failHandler;
 
-- (instancetype)initWithSession:(TOSMBSession *)session stream:(TOSMBSessionStream *)stream;
+- (instancetype)initWithSession:(TOSMBSession *)session share:(TOSMBShare *)share;
 
 - (void)fail;
 - (void)didFailWithError:(NSError *)error;

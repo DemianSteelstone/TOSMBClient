@@ -32,7 +32,7 @@
  * @param session The session in which this item belongs to
  * @param path The absolute file path to this file's parent directory. Used to generate this file's own file path.
  */
-- (instancetype)initWithStat:(smb_stat)stat session:(TOSMBSession *)session filePath:(NSString *)path;
+- (instancetype)initWithStat:(smb_stat)stat filePath:(NSString *)path;
 
 /**
  * Init a new instance representing the share itself, which in the case of libSMD, is simply another directory
@@ -40,6 +40,6 @@
  * @param name The name of the share
  * @param session The session in which this item belongs to
  */
-- (instancetype)initWithShareName:(NSString *)name session:(TOSMBSession *)session;
+- (instancetype)initWithShareName:(NSString *)name;
 
 @end

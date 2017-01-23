@@ -18,18 +18,7 @@ typedef void(^TOSMBSessionStreamItemChangeSuccessBlock)( TOSMBSessionFile * _Non
 @property (nonatomic, strong, nullable) TOSMBSessionFile *file;
 @property (nonnull,readonly) NSString *path;
 
-- (nullable TOSMBSessionFile *)requestContent;
-
-- (void)openStream:(_Nullable dispatch_block_t)successBlock
-         failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
-
-- (void)createFolderWithSuccessBlock:(_Nullable TOSMBSessionStreamItemChangeSuccessBlock)successBlock
-                          failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
-
-- (void)moveItemToPath:( NSString * _Nonnull )path
-         successBlock:(_Nullable TOSMBSessionStreamItemChangeSuccessBlock)successBlock
-            failBlock:(_Nullable TOSMBSessionStreamFailBlock)failBlock;
-
 - (void)close;
+- (BOOL)open:(NSError * _Nonnull __autoreleasing * _Nonnull)error;
 
 @end

@@ -17,12 +17,12 @@
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath
                         newName:(NSString *)newName
-                       delegate:(id<TOSMBSessionUploadTaskDelegate>)delegate;
+                       delegate:(id<TOSMBSessionMoveTaskDelegate>)delegate;
 
 - (instancetype)initWithSession:(TOSMBSession *)session
                      sourcePath:(NSString *)srcPath
                         newName:(NSString *)newName
-                 successHandler:(TOSMBSessionUploadTaskSuccessBlock)successHandler
+                 successHandler:(TOSMBSessionMoveTaskSuccessBlock)successHandler
                     failHandler:(TOSMBSessionTaskFailBlock)failHandler;
 
 @end

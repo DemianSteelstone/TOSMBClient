@@ -21,7 +21,9 @@
 // -------------------------------------------------------------------------------
 
 #import "TOSMBSessionDownloadTaskPrivate.h"
-#import "TOSMBSessionDownloadStream.h"
+#import "TOSMBShare.h"
+#import "NSString+SMBNames.h"
+#import "TOSMBSessionReadStream.h"
 #import "TOSMBSessionStreamPrivate.h"
 
 // -------------------------------------------------------------------------
@@ -43,8 +45,9 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)path
 {
-    TOSMBSessionDownloadStream *stream = [TOSMBSessionDownloadStream streamForPath:path];
-    self = [super initWithSession:session stream:stream];
+    TOSMBShare *share = [[TOSMBShare alloc] initWithShareName:path.shareName];
+    self = [super initWithSession:session share:share];
+    _sourceFilePath = path;
     return self;
 }
 
@@ -138,16 +141,11 @@
 
 #pragma mark - Downloading -
 
-- (void)performTaskWithOperation:(__weak NSBlockOperation *)weakOperation
+- (void)performTask
 {
-    if (weakOperation.isCancelled)
-        return;
-    
-    __weak typeof(self) weakSelf = self;
-    
-    TOSMBSessionDownloadStream *downloadStream = (TOSMBSessionDownloadStream *)self.stream;
-    
-   NSError *error = nil;
+    TOSMBSessionReadStream *readStream = [TOSMBSessionReadStream streamWithShare:self.share
+                                                                        itemPath:self.sourceFilePath];
+    NSError *error = nil;
     
     NSData *data = [NSData data];
     [data writeToFile:self.destinationFilePath options:NSDataWritingAtomic error:&error];
@@ -164,28 +162,34 @@
         [self didFailWithError:error];
         return;
     }
-    
-    uint64_t totalBytesRead = 0;
-    uint64_t expectedSize = downloadStream.file.fileSize;
-    
-    while (totalBytesRead < expectedSize) {
-        NSData *data = [downloadStream readChunk:&error];
+
+    if (!self.isCanceled && [readStream open:&error])
+    {
+        uint64_t totalBytesRead = 0;
+        uint64_t expectedSize = readStream.file.fileSize;
         
-        if (error)
-        {
-            break;
-        }
-        else
-        {
-            int64_t bytesRead = data.length;
-            totalBytesRead += bytesRead;
+        while (totalBytesRead < expectedSize) {
+            NSData *data = [readStream readChunk:&error];
             
-            //Save them to the file handle (And ensure the NSData object is flushed immediately)
-            [fileHandle writeData:data];
-            
-            [self didDownloadBytes:bytesRead totalBytesDownloaded:totalBytesRead totalBytesExpected:expectedSize];
-        }
-    };
+            if (self.isCanceled || error)
+            {
+                break;
+            }
+            else
+            {
+                int64_t bytesRead = data.length;
+                totalBytesRead += bytesRead;
+                
+                //Save them to the file handle (And ensure the NSData object is flushed immediately)
+                [fileHandle writeData:data];
+                
+                [self didDownloadBytes:bytesRead
+                  totalBytesDownloaded:totalBytesRead
+                    totalBytesExpected:expectedSize];
+            }
+        };
+
+    }
     
     //Ensure the data is properly written to disk before proceeding
     [fileHandle synchronizeFile];
@@ -194,14 +198,13 @@
     
     if (error)
     {
-        [weakSelf didFailWithError:error];
+        [self didFailWithError:error];
     }
     else
     {
-        [weakSelf didSucceed];
+        if (!self.isCanceled)
+            [self didSucceed];
     }
-    
-    downloadStream.cleanupBlock();
 }
 
 @end

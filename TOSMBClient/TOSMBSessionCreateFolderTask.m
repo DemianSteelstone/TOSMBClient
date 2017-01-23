@@ -7,24 +7,27 @@
 //
 
 #import "TOSMBSessionCreateFolderTaskPrivate.h"
-#import "TOSMBSessionStream.h"
-#import "TOSMBSessionStreamPrivate.h"
+#import "TOSMBShare.h"
+#import "NSString+SMBNames.h"
 
 @interface TOSMBSessionCreateFolderTask ()
 
 @property (nonatomic,copy) TOSSMBSessionCreateFolderTaskSuccessBlock successHandler;
 
 @property (nonatomic, weak) id <TOSMBSessionCreateFolderTaskDelegate> delegate;
+@property (nonatomic, strong) NSString *path;
 
 @end
 
 @implementation TOSMBSessionCreateFolderTask
 @dynamic delegate;
 
--(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
+-(instancetype)initWithSession:(TOSMBSession *)session
+                          path:(NSString *)smbPath
 {
-    TOSMBSessionStream *stream = [TOSMBSessionStream streamForPath:smbPath];
-    self = [super initWithSession:session stream:stream];
+    TOSMBShare *share = [[TOSMBShare alloc] initWithShareName:smbPath.shareName];
+    self = [super initWithSession:session share:share];
+    _path = smbPath;
     return self;
 }
 
@@ -49,18 +52,16 @@
 }
 
 #pragma mark -
-- (void)performTaskWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation {
-    
-    if (weakOperation.isCancelled)
-        return;
+- (void)performTask {
     
     __weak typeof(self) weakSelf = self;
     
-    [self.stream createFolderWithSuccessBlock:^(TOSMBSessionFile *folder){
-        [weakSelf didFinishWithItem:folder];
-    } failBlock:^(NSError *error) {
-        [weakSelf didFailWithError:error];
-    }];
+    [self.share createFolderAtPath:_path
+                      successBlock:^(TOSMBSessionFile * _Nonnull item) {
+                          [weakSelf didFinishWithItem:item];
+                      } failBlock:^(NSError * _Nonnull error) {
+                          [weakSelf didFailWithError:error];
+                      }];
 }
 
 - (void)didFinishWithItem:(TOSMBSessionFile *)folder {

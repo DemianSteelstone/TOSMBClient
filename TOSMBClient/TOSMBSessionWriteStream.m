@@ -10,8 +10,8 @@
 #import "TOSMBSessionStreamPrivate.h"
 
 #import "TOSMBConstants.h"
-#import "TOSMBSessionFile.h"
 #import "NSString+SMBNames.h"
+#import "TOSMBShare.h"
 
 @implementation TOSMBSessionWriteStream
 
@@ -24,7 +24,7 @@
     void *buffer = malloc(bufferSize);
     [data getBytes:buffer length:bufferSize];
     
-    bytesWritten = smb_fwrite(self.smbSession, self.fileID, buffer, bufferSize);
+    bytesWritten = smb_fwrite(self.share.smbSession, self.fileID, buffer, bufferSize);
     
     if (bytesWritten < 0)
     {
@@ -36,29 +36,9 @@
 }
 
 #pragma mark -
--(BOOL)findTargetFile
+-(uint32_t)permissions
 {
-    //Find the target file
-    //Get the file info we'll be working off
-    self.file = [self requestContent];
-    
-    return YES;
-}
-
--(BOOL)openFile
-{
-    smb_fd fileID = 0;;
-    //Open the file handle
-    NSString *path = [self.path formattedFilePath];
-    smb_fopen(self.smbSession, self.treeID, path.UTF8String, SMB_MOD_RW, &fileID);
-    if (!fileID) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
-        return NO;
-    }
-    
-    self.fileID = fileID;
-    
-    return YES;
+    return SMB_MOD_RW;
 }
 
 @end

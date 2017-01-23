@@ -17,7 +17,8 @@
                        delegate:(id<TOSMBSessionMoveTaskDelegate>)delegate
 {
     NSString *newNamePath = [self newPathForPath:srcPath name:newName];
-    return [self initWithSession:session sourcePath:srcPath
+    return [self initWithSession:session
+                      sourcePath:srcPath
                          dstPath:newNamePath
                         delegate:delegate];
 }
@@ -29,7 +30,8 @@
                     failHandler:(TOSMBSessionTaskFailBlock)failHandler
 {
     NSString *newNamePath = [self newPathForPath:srcPath name:newName];
-    return [self initWithSession:session sourcePath:srcPath
+    return [self initWithSession:session
+                      sourcePath:srcPath
                          dstPath:newNamePath
                   successHandler:successHandler
                      failHandler:failHandler];

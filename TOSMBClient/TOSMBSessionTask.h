@@ -50,6 +50,8 @@ typedef void(^TOSMBSessionTaskFailBlock)(NSError *error);
 /** The state of the task. */
 @property (readonly) TOSMBSessionTaskState state;
 
+@property (readonly, getter=isCanceled) BOOL canceled;
+
 /**
  Resumes an existing task, or starts a new one otherwise.
  

@@ -37,6 +37,7 @@
 #import "TOSMBSessinCopyTaskPrivate.h"
 
 #import "NSString+SMBNames.h"
+#import "TOSMBShare.h"
 
 @interface TOSMBSession ()
 
@@ -161,6 +162,11 @@
     return nil;
 }
 
+-(NSError *)attemptConnectionToShare:(TOSMBShare *)share
+{
+    return [self attemptConnectionWithSessionPointer:share.smbSession];
+}
+
 - (NSError *)attemptConnectionWithSessionPointer:(smb_session *)session
 {
 //    //There's no point in attempting a potentially costly TCP attempt if we're not even on a local network.
@@ -274,7 +280,8 @@
         return nil;
     }
 
-    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat session:self filePath:fixedPath];
+    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat
+                                                           filePath:fixedPath];
 
     smb_stat_destroy(fileStat);
     smb_tree_disconnect(self.session, shareIdentifier);
@@ -312,7 +319,7 @@
                 continue;
             
             NSString *shareNameString = [NSString stringWithCString:shareName encoding:NSUTF8StringEncoding];
-            TOSMBSessionFile *share = [[TOSMBSessionFile alloc] initWithShareName:shareNameString session:self];
+            TOSMBSessionFile *share = [[TOSMBSessionFile alloc] initWithShareName:shareNameString];
             [shareList addObject:share];
         }
         
@@ -376,7 +383,6 @@
         NSString *pathWithName = [path stringByAppendingPathComponent:nameStr];
         
         TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:item
-                                                                session:self
                                                                filePath:pathWithName];
         [fileList addObject:file];
     }

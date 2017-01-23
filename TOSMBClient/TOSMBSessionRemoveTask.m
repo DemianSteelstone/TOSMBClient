@@ -7,12 +7,13 @@
 //
 
 #import "TOSMBSessionRemoveTaskPrivate.h"
-#import "TOSMBSessionDeleteStream.h"
-#import "TOSMBSessionStreamPrivate.h"
+#import "TOSMBShare.h"
+#import "NSString+SMBNames.h"
 
 @interface TOSMBSessionRemoveTask ()
 
 @property (nonatomic,copy) dispatch_block_t successHandler;
+@property (nonatomic, strong) NSString *path;
 
 @property (nonatomic, weak) id <TOSMBSessionRemoveTaskDelegate> delegate;
 
@@ -22,10 +23,12 @@
 
 @dynamic delegate;
 
--(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)smbPath
+-(instancetype)initWithSession:(TOSMBSession *)session
+                          path:(NSString *)smbPath
 {
-    TOSMBSessionDeleteStream *stream = [TOSMBSessionDeleteStream streamForPath:smbPath];
-    self = [super initWithSession:session stream:stream];
+    TOSMBShare *share = [[TOSMBShare alloc] initWithShareName:smbPath.shareName];
+    self = [super initWithSession:session share:share];
+    _path = smbPath;
     return self;
 }
 
@@ -50,19 +53,16 @@
 }
 
 #pragma mark -
-- (void)performTaskWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation {
+- (void)performTask {
     
-    if (weakOperation.isCancelled)
-        return;
     __weak typeof(self) weakSelf = self;
     
-    TOSMBSessionDeleteStream *readStream = (TOSMBSessionDeleteStream *)self.stream;
-    
-    [readStream removeItemWithSuccessBlock:^{
-        [weakSelf didFinish];
-    } failBlock:^(NSError *error) {
-        [weakSelf didFailWithError:error];
-    }];
+    [self.share removeItemAtPath:self.path
+                    successBlock:^{
+                        [weakSelf didFinish];
+                    } failBlock:^(NSError * _Nonnull error) {
+                        [weakSelf didFailWithError:error];
+                    }];
 }
 
 - (void)didFinish {

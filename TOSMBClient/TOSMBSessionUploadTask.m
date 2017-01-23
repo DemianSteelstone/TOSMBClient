@@ -24,10 +24,13 @@
 #import "TOSMBSessionPrivate.h"
 #import "TOSMBSessionWriteStream.h"
 #import "TOSMBSessionStreamPrivate.h"
+#import "TOSMBShare.h"
+#import "NSString+SMBNames.h"
 
 @interface TOSMBSessionUploadTask ()
 
-@property (nonatomic, strong) NSString *filePath;
+@property (nonatomic, strong, readwrite) NSString *sourceFilePath;
+@property (nonatomic, strong, readwrite) NSString *destinationFilePath;
 
 @property (nonatomic, weak) id <TOSMBSessionUploadTaskDelegate> delegate;
 @property (nonatomic, copy) TOSMBSessionUploadTaskSuccessBlock successHandler;
@@ -40,8 +43,9 @@
 
 -(instancetype)initWithSession:(TOSMBSession *)session path:(NSString *)path
 {
-    TOSMBSessionWriteStream *stream = [TOSMBSessionWriteStream streamForPath:path];
-    self = [super initWithSession:session stream:stream];
+    TOSMBShare *share = [[TOSMBShare alloc] initWithShareName:path.shareName];
+    self = [super initWithSession:session share:share];
+    _destinationFilePath = path;
     return self;
 }
 
@@ -51,7 +55,7 @@
 {
     if ((self = [self initWithSession:session path:dstPath])) {
         
-        self.filePath = srcPath;
+        self.sourceFilePath = srcPath;
     }
     
     return self;
@@ -85,7 +89,9 @@
 
 #pragma mark - delegate helpers
 
-- (void)didSendBytes:(long long)sendBytes totalBytesSent:(long long)totalBytesSent totalBytesExpectedToSend:(long long)totalBytesExpectedToSend {
+- (void)didSendBytes:(long long)sendBytes
+      totalBytesSent:(long long)totalBytesSent
+totalBytesExpectedToSend:(long long)totalBytesExpectedToSend {
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([weakSelf.delegate respondsToSelector:@selector(uploadTask:didSendBytes:totalBytesSent:totalBytesExpectedToSend:)]) {
@@ -114,17 +120,15 @@
 
 #pragma mark - task
 
-- (void)performTaskWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation {
+- (void)performTask
+{
+    TOSMBSessionWriteStream *writeStream = [TOSMBSessionWriteStream streamWithShare:self.share
+                                                                           itemPath:self.destinationFilePath];
     
-    if (weakOperation.isCancelled)
-        return;
+    NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:self.sourceFilePath];
     
-    TOSMBSessionWriteStream *uploadStream = (TOSMBSessionWriteStream *)self.stream;
-    
-    NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:self.filePath];
-    [fileHandle seekToFileOffset:0];
-    
-    NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:self.filePath error:NULL];
+    NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:self.sourceFilePath
+                                                                                error:NULL];
     long long expectedSize = [attributes fileSize];
     
     NSData *data;
@@ -133,9 +137,9 @@
     
     while (((data = [fileHandle readDataOfLength: TOSMBSessionStreamChunkSize]).length > 0))
     {
-        [uploadStream writeData:data error:&error];
+        [writeStream writeData:data error:&error];
         
-        if (error)
+        if (self.isCanceled || error)
         {
             break;
         }
@@ -152,11 +156,13 @@
     }
     else
     {
-        TOSMBSessionFile *file = [uploadStream requestContent];
-        [self didFinishWithItem:file];
+        if (!self.isCanceled)
+        {
+            TOSMBSessionFile *file = [self.share requestItemAtPath:self.destinationFilePath];
+            [self didFinishWithItem:file];
+
+        }
     }
-    
-    uploadStream.cleanupBlock();
 }
 
 @end

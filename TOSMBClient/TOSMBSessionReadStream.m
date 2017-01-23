@@ -12,6 +12,8 @@
 #import "NSString+SMBNames.h"
 #import "TOSMBConstants.h"
 
+#import "TOSMBShare.h"
+
 @implementation TOSMBSessionReadStream
 
 #pragma mark -
@@ -22,7 +24,7 @@
     NSInteger bufferSize = 64000;
     char *buffer = malloc(bufferSize);
     
-    bytesRead = smb_fread(self.smbSession, self.fileID, buffer, bufferSize);
+    bytesRead = smb_fread(self.share.smbSession, self.fileID, buffer, bufferSize);
     if (bytesRead < 0)
     {
         *error = errorForErrorCode(TOSMBSessionErrorCodeFileReadFailed);
@@ -39,35 +41,9 @@
 
 #pragma mark -
 
--(BOOL)findTargetFile
+-(uint32_t)permissions
 {
-    //Find the target file
-    //Get the file info we'll be working off
-    
-    self.file = [self requestContent];
-    
-    if (self.file == nil) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
-        self.cleanupBlock();
-        return NO;
-    }
-    
-    return YES;
-}
-
--(BOOL)openFile
-{
-    smb_fd fileID = 0;;
-    //Open the file handle
-    NSString *path = [self.path formattedFilePath];
-    smb_fopen(self.smbSession, self.treeID, [path cStringUsingEncoding:NSUTF8StringEncoding], SMB_MOD_RO, &fileID);
-    if (!fileID) {
-        [self didFailWithError:errorForErrorCode(TOSMBSessionErrorCodeFileNotFound)];
-        return NO;
-    }
-    
-    self.fileID = fileID;
-    return YES;
+    return SMB_MOD_RO;
 }
 
 @end

@@ -22,6 +22,7 @@
 
 #import "TOSMBSessionTaskPrivate.h"
 #import "TOSMBSessionStreamPrivate.h"
+#import "TOSMBShare.h"
 
 @interface TOSMBSessionTask ()
 
@@ -29,10 +30,10 @@
 
 @implementation TOSMBSessionTask
 
-- (instancetype)initWithSession:(TOSMBSession *)session stream:(nonnull TOSMBSessionStream *)stream {
+- (instancetype)initWithSession:(TOSMBSession *)session share:(nonnull TOSMBShare *)share {
     if((self = [super init])) {
         self.session = session;
-        self.stream = stream;
+        self.share = share;
     }
     
     return self;
@@ -45,9 +46,8 @@
         _taskOperation = [[NSBlockOperation alloc] init];
         
         __weak typeof(self) weakSelf = self;
-        __weak NSBlockOperation *weakOperation = _taskOperation;
         [_taskOperation addExecutionBlock:^{
-            [weakSelf prepareWithOperation:weakOperation];
+            [weakSelf prepare];
         }];
         
         _taskOperation.completionBlock = ^{
@@ -59,42 +59,29 @@
 
 #pragma mark - Task Methods
 
--(BOOL)connectToSMBDeviceOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(void)prepare
 {
-    //First, check to make sure the server is there, and to acquire its attributes
-    __block NSError *error = nil;
-    dispatch_sync(self.session.serialQueue, ^{
-        error = [self.session attemptConnectionWithSessionPointer:self.stream.smbSession];
-    });
-    if (error) {
-        [self didFailWithError:error];
-        return NO;
-    }
+    BOOL prepeared = YES;
     
-    if (weakOperation.isCancelled) {
-        self.stream.cleanupBlock();
-        return NO;
-    }
+    NSError *error = [self.session attemptConnectionToShare:self.share];
     
-    return YES;
-}
-
--(BOOL)prepareWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
-{
-    if ([self connectToSMBDeviceOperation:weakOperation])
+    if (self.share.connected == NO)
     {
-        __weak typeof(self) weakSelf = self;
-        [self.stream openStream:^{
-            [weakSelf performTaskWithOperation:weakOperation];
-        } failBlock:^(NSError *error) {
-            [weakSelf didFailWithError:error];
-        }];
+        NSError *error = nil;
+        prepeared = [self.share connectToShare:&error];
     }
     
-    return NO;
+    if (!error && prepeared)
+    {
+        [self performTask];
+    }
+    else
+    {
+        [self didFailWithError:error];
+    }
 }
 
-- (void)performTaskWithOperation:(__weak NSBlockOperation *)operation {
+- (void)performTask {
     return;
 }
 
@@ -115,10 +102,14 @@
         return;
     
     [self.taskOperation cancel];
-    [self.stream close];
     self.state = TOSMBSessionTaskStateCancelled;
     
     self.taskOperation = nil;
+}
+
+-(BOOL)isCanceled
+{
+    return self.state == TOSMBSessionTaskStateCancelled;
 }
 
 #pragma mark - Private Control Methods

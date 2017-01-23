@@ -10,12 +10,16 @@
 #import "TOSMBSessionReadStream.h"
 #import "TOSMBSessionWriteStream.h"
 #import "TOSMBSessionStreamPrivate.h"
+#import "NSString+SMBNames.h"
+#import "TOSMBShare.h"
 
 @interface TOSMBSessionCopyTask ()
 
 @property (nonatomic, weak) id <TOSMBSessionCopyTaskDelegate> delegate;
-@property (nonatomic,strong) TOSMBSessionWriteStream *writeStream;
+@property (nonatomic,strong) TOSMBShare *dstShare;
 @property (nonatomic, copy) TOSMBSessionCopyTaskSuccessBlock successHandler;
+@property (nonatomic, strong) NSString *srcPath;
+@property (nonatomic, strong) NSString *dstPath;
 
 @end
 
@@ -23,16 +27,24 @@
 
 @dynamic delegate;
 
-- (instancetype)initWithSession:(TOSMBSession *)session
-                     sourcePath:(NSString *)srcPath
-                        dstPath:(NSString *)dstPath
+-(instancetype)initWithSession:(TOSMBSession *)session
+                    sourcePath:(NSString *)srcPath
+                       dstPath:(NSString *)dstPath
 {
+    TOSMBShare *share = [[TOSMBShare alloc] initWithShareName:srcPath.shareName];
+    self = [super initWithSession:session share:share];
     
-    TOSMBSessionReadStream *readStream = [TOSMBSessionReadStream streamForPath:srcPath];
-    TOSMBSessionWriteStream *writeStream = [TOSMBSessionWriteStream streamWithSession:readStream.smbSession path:dstPath];
+    if ([srcPath.shareName isEqualToString:dstPath.shareName])
+    {
+        _dstShare = share;
+    }
+    else
+    {
+        _dstShare = [[TOSMBShare alloc] initWithShareName:dstPath.shareName];
+    }
     
-    self = [super initWithSession:session stream:readStream];
-    _writeStream = writeStream;
+    _srcPath = srcPath;
+    _dstPath = dstPath;
     return self;
 }
 
@@ -66,53 +78,60 @@
     return self;
 }
 
--(void)performTaskWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(void)performTask
 {
-    if (weakOperation.isCancelled)
-        return;
-    
-    __weak typeof(self) weakSelf = self;
-    
-    [self.writeStream openStream:^{
-        [weakSelf startCopyWithOperation:weakOperation];
-    } failBlock:^(NSError *error) {
-        [weakSelf didFailWithError:error];
-    }];
+    if (_dstShare.connected == NO)
+    {
+        NSError *error = nil;
+        BOOL success = [_dstShare connectToShare:&error];
+        if (!success)
+        {
+            [self didFailWithError:error];
+            return;
+        }
+    }
 }
 
--(void)startCopyWithOperation:(NSBlockOperation * _Nonnull __weak)weakOperation
+-(void)startCopy
 {
     NSError *error = nil;
     
     uint64_t totalBytesWritten = 0;
-    uint64_t expectedSize = self.stream.file.fileSize;
+    uint64_t totalBytesRead = 0;
     
-    TOSMBSessionReadStream *readStream = (TOSMBSessionReadStream *)self.stream;
+    TOSMBSessionReadStream *readStream = [TOSMBSessionReadStream streamWithShare:self.share
+                                                                        itemPath:self.srcPath];
     
-    while (totalBytesWritten < expectedSize) {
-        
-        if (weakOperation.isCancelled)
+    TOSMBSessionWriteStream *writeStream = [TOSMBSessionWriteStream streamWithShare:self.dstShare
+                                                                        itemPath:self.dstPath];
+    
+    if (!self.isCanceled && [readStream open:&error])
+    {
+        if (!self.isCanceled && [writeStream open:&error])
         {
-            [self end];
-            return;
+            uint64_t expectedSize = readStream.file.fileSize;
+            
+            while (totalBytesRead < expectedSize) {
+                
+                NSData *data = [readStream readChunk:&error];
+                if (self.isCanceled || error)
+                {
+                    break;
+                }
+                
+                totalBytesRead +=data.length;
+                totalBytesWritten += [writeStream writeData:data error:&error];
+                
+                if (self.isCanceled || error)
+                {
+                    break;
+                }
+                
+                [self didCopyBytes:data.length
+                  totalCopiedBytes:totalBytesWritten
+                      expectedSize:expectedSize];
+            }
         }
-        
-        NSData *data = [readStream readChunk:&error];
-        if (error)
-        {
-            break;
-        }
-        
-        totalBytesWritten += [self.writeStream writeData:data error:&error];
-        
-        if (error)
-        {
-            break;
-        }
-        
-        [self didCopyBytes:data.length
-          totalCopiedBytes:totalBytesWritten
-              expectedSize:expectedSize];
     }
     
     if (error)
@@ -121,17 +140,12 @@
     }
     else
     {
-        TOSMBSessionFile *file = [self.writeStream requestContent];
-        [self didFinishWithItem:file];
+        if (!self.isCanceled)
+        {
+            TOSMBSessionFile *file = [self.dstShare requestItemAtPath:self.dstPath];
+            [self didFinishWithItem:file];
+        }
     }
-    
-    [self end];
-}
-
--(void)end
-{
-    self.stream.cleanupBlock();
-//    self.writeStream.cleanupBlock();
 }
 
 - (void)didFinishWithItem:(TOSMBSessionFile *)item {
