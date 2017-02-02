@@ -25,7 +25,7 @@ static const uint64_t TOSMBSessionStreamChunkSize = 64000;
                                 itemPath:(NSString * _Nonnull)path;
 
 - (uint32_t)permissions;
-- (BOOL)findTargetFile:(NSError **)error;
+- (BOOL)findTargetFile:(NSError * __autoreleasing  _Nullable *  _Nullable)error;
 @end
 
 #endif /* TOSMBSessionStreamPrivate_h */

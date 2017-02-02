@@ -26,7 +26,7 @@ typedef void(^TOSMBSessionShareItemChangeSuccessBlock)( TOSMBSessionFile * _Nonn
 
 - (BOOL)connectToShare:(NSError * _Nonnull __autoreleasing * _Nonnull)error;
 
-- (TOSMBSessionFile *)requestItemAtPath:(NSString *)filePath;
+- (TOSMBSessionFile * _Nullable)requestItemAtPath:(NSString * _Nonnull)filePath;
 
 - (void)createFolderAtPath:(NSString * _Nonnull)path
               successBlock:(_Nullable TOSMBSessionShareItemChangeSuccessBlock)successBlock
@@ -37,9 +37,9 @@ typedef void(^TOSMBSessionShareItemChangeSuccessBlock)( TOSMBSessionFile * _Nonn
             successBlock:(_Nullable TOSMBSessionShareItemChangeSuccessBlock)successBlock
                failBlock:(_Nullable TOSMBSessionShareFailBlock)failBlock;
 
--(void)removeItemAtPath:(NSString *)path
-           successBlock:(dispatch_block_t)successBlock
-              failBlock:(TOSMBSessionShareFailBlock)failBlock;
+-(void)removeItemAtPath:(NSString *_Nonnull)path
+           successBlock:(_Nullable dispatch_block_t)successBlock
+              failBlock:(_Nullable TOSMBSessionShareFailBlock)failBlock;
 
 
 @end
