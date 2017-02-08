@@ -83,6 +83,32 @@
     return self;
 }
 
++ (BOOL)isValidIpAddress:(NSString *)ip {
+    const char *utf8 = [ip UTF8String];
+    
+    // Check valid IPv4.
+    struct in_addr dst;
+    int success = inet_pton(AF_INET, utf8, &(dst.s_addr));
+    if (success != 1) {
+        // Check valid IPv6.
+        struct in6_addr dst6;
+        success = inet_pton(AF_INET6, utf8, &dst6);
+    }
+    return (success == 1);
+}
+
+- (instancetype)initWithAddress:(NSString *)address
+{
+    BOOL isIp = [TOSMBSession isValidIpAddress:address];
+    if (isIp)
+    {
+        return  [self initWithIPAddress:address];
+    }
+    else
+    {
+        return [self initWithHostName:address];
+    }
+}
 - (instancetype)initWithHostName:(NSString *)name
 {
     if (self = [self init]) {
@@ -227,12 +253,13 @@
     
     //If the username or password wasn't supplied, a non-NULL string must still be supplied
     //to avoid NULL input assertions.
-    const char *userName = (self.userName ? [self.userName cStringUsingEncoding:NSUTF8StringEncoding] : " ");
-    const char *password = (self.password ? [self.password cStringUsingEncoding:NSUTF8StringEncoding] : " ");
+    const char *userName = (self.userName ? [self.userName cStringUsingEncoding:NSUTF8StringEncoding] : "");
+    const char *password = (self.password ? [self.password cStringUsingEncoding:NSUTF8StringEncoding] : "");
     
     //Attempt a login. Even if we're downgraded to guest, the login call will succeed
     smb_session_set_creds(session, hostName, userName, password);
-    if (smb_session_login(session) != 0) {
+    int login_res = smb_session_login(session);
+    if (login_res < 0) {
         return errorForErrorCode(TOSMBSessionErrorCodeAuthenticationFailed);
     }
     

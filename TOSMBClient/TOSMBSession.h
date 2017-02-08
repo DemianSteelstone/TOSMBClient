@@ -66,9 +66,12 @@
  @return A new instance of a session object
  
  */
+- (instancetype)initWithAddress:(NSString *)address;
 - (instancetype)initWithHostName:(NSString *)name;
 - (instancetype)initWithIPAddress:(NSString *)address;
 - (instancetype)initWithHostName:(NSString *)name ipAddress:(NSString *)ipAddress;
+
+- (NSError *)attemptConnection;
 
 /**
  Sets both the username and password for this login session. This should be set before any
