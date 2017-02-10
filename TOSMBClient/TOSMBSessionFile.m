@@ -64,7 +64,7 @@
     return self;
 }
 
-- (instancetype)initWithStat:(smb_stat)stat session:(TOSMBSession *)session parentDirectoryFilePath:(NSString *)path
+- (instancetype)initWithStat:(smb_stat)stat filePath:(NSString *)path
 {
     if (stat == NULL)
         return nil;
@@ -85,13 +85,13 @@
         _modificationTime = [self dateFromLDAPTimeStamp:_modificationTimestamp];
         _creationTime = [self dateFromLDAPTimeStamp:_creationTimestamp];
         
-        _filePath = [path stringByAppendingPathComponent:_name];
+        _filePath = path;
     }
     
     return self;
 }
 
-- (instancetype)initWithShareName:(NSString *)name session:(TOSMBSession *)session
+- (instancetype)initWithShareName:(NSString *)name
 {
     if (name.length == 0)
         return nil;
@@ -103,8 +103,6 @@
         _allocationSize = 0;
         _directory = YES;
         _filePath = [NSString stringWithFormat:@"//%@/", name];
-        
-        _session = session;
     }
     
     return self;

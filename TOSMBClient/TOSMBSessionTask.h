@@ -27,6 +27,9 @@
 @class TOSMBSessionTask;
 @class TOSMBSession;
 
+typedef void(^TOSMBSessionTaskProgressBlock)(uint64_t totalBytesWritten, uint64_t totalBytesExpected);
+typedef void(^TOSMBSessionTaskFailBlock)(NSError *error);
+
 @protocol TOSMBSessionTaskDelegate <NSObject>
 @optional
 /**
@@ -44,11 +47,10 @@
 /** The parent session that is managing this download task. (Retained by this class) */
 @property (readonly, weak) TOSMBSession *session;
 
-/** Returns if download data from a suspended task exists */
-@property (readonly) BOOL canBeResumed;
-
 /** The state of the task. */
 @property (readonly) TOSMBSessionTaskState state;
+
+@property (readonly, getter=isCanceled) BOOL canceled;
 
 /**
  Resumes an existing task, or starts a new one otherwise.
@@ -56,12 +58,7 @@
  Downloads are resumed if there is already data for this file on disk,
  and the modification date of that file matches the one on the network device.
  */
-- (void)resume;
-
-/**
- Suspends a task and halts network activity.
- */
-- (void)suspend;
+- (void)start;
 
 /**
  Cancels a task, and deletes all related transient data on disk.

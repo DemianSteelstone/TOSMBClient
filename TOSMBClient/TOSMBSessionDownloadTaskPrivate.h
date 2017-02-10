@@ -37,9 +37,9 @@
 - (instancetype)initWithSession:(TOSMBSession *)session
                        filePath:(NSString *)filePath
                 destinationPath:(NSString *)destinationPath
-                progressHandler:(id)progressHandler
-                 successHandler:(id)successHandler
-                    failHandler:(id)failHandler;
+                progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
+                 successHandler:(TOSMBSessionDownloadTaskSuccsessBlock)successHandler
+                    failHandler:(TOSMBSessionTaskFailBlock)failHandler;
 
 @end
 

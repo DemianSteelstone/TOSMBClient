@@ -26,13 +26,18 @@
 #import "TOSMBSessionPrivate.h"
 #import "TOSMBSessionFile.h"
 #import "TOSMBSessionFilePrivate.h"
+
 #import "TONetBIOSNameService.h"
+
 #import "TOSMBSessionDownloadTaskPrivate.h"
 #import "TOSMBSessionUploadTaskPrivate.h"
+#import "TOSMBSessionRemoveTaskPrivate.h"
+#import "TOSMBSessionCreateFolderTaskPrivate.h"
+#import "TOSMBSessionRenameTaskPrivate.h"
+#import "TOSMBSessinCopyTaskPrivate.h"
 
-#import "smb_session.h"
-#import "smb_share.h"
-#import "smb_stat.h"
+#import "NSString+SMBNames.h"
+#import "TOSMBShare.h"
 
 @interface TOSMBSession ()
 
@@ -59,10 +64,6 @@
 - (NSError *)attemptConnection; //Attempt connection for ourselves
 - (NSError *)attemptConnectionWithSessionPointer:(smb_session *)session; //Attempt connection on behalf of concurrent download sessions
 
-/* File path parsing */
-- (NSString *)shareNameFromPath:(NSString *)path;
-- (NSString *)filePathExcludingSharePathFromPath:(NSString *)path;
-
 @end
 
 @implementation TOSMBSession
@@ -82,6 +83,32 @@
     return self;
 }
 
++ (BOOL)isValidIpAddress:(NSString *)ip {
+    const char *utf8 = [ip UTF8String];
+    
+    // Check valid IPv4.
+    struct in_addr dst;
+    int success = inet_pton(AF_INET, utf8, &(dst.s_addr));
+    if (success != 1) {
+        // Check valid IPv6.
+        struct in6_addr dst6;
+        success = inet_pton(AF_INET6, utf8, &dst6);
+    }
+    return (success == 1);
+}
+
+- (instancetype)initWithAddress:(NSString *)address
+{
+    BOOL isIp = [TOSMBSession isValidIpAddress:address];
+    if (isIp)
+    {
+        return  [self initWithIPAddress:address];
+    }
+    else
+    {
+        return [self initWithHostName:address];
+    }
+}
 - (instancetype)initWithHostName:(NSString *)name
 {
     if (self = [self init]) {
@@ -161,12 +188,17 @@
     return nil;
 }
 
+-(NSError *)attemptConnectionToShare:(TOSMBShare *)share
+{
+    return [self attemptConnectionWithSessionPointer:share.smbSession];
+}
+
 - (NSError *)attemptConnectionWithSessionPointer:(smb_session *)session
 {
-    //There's no point in attempting a potentially costly TCP attempt if we're not even on a local network.
-    if ([self deviceIsOnWiFi] == NO) {
-        return errorForErrorCode(TOSMBSessionErrorNotOnWiFi);
-    }
+//    //There's no point in attempting a potentially costly TCP attempt if we're not even on a local network.
+//    if ([self deviceIsOnWiFi] == NO) {
+//        return errorForErrorCode(TOSMBSessionErrorNotOnWiFi);
+//    }
     
     // If we're connecting from a download task, and the sessions match, make sure to
     // refresh them periodically
@@ -221,12 +253,13 @@
     
     //If the username or password wasn't supplied, a non-NULL string must still be supplied
     //to avoid NULL input assertions.
-    const char *userName = (self.userName ? [self.userName cStringUsingEncoding:NSUTF8StringEncoding] : " ");
-    const char *password = (self.password ? [self.password cStringUsingEncoding:NSUTF8StringEncoding] : " ");
+    const char *userName = (self.userName ? [self.userName cStringUsingEncoding:NSUTF8StringEncoding] : "");
+    const char *password = (self.password ? [self.password cStringUsingEncoding:NSUTF8StringEncoding] : "");
     
     //Attempt a login. Even if we're downgraded to guest, the login call will succeed
     smb_session_set_creds(session, hostName, userName, password);
-    if (smb_session_login(session) != 0) {
+    int login_res = smb_session_login(session);
+    if (login_res < 0) {
         return errorForErrorCode(TOSMBSessionErrorCodeAuthenticationFailed);
     }
     
@@ -241,8 +274,16 @@
 
 - (TOSMBSessionFile *)fetchFileAtPath:(NSString *)path error:(NSError **)error
 {
+    NSError *connectionError = [self attemptConnection];
+    if (connectionError)
+    {
+        if (error)
+            *error = connectionError;
+        return nil;
+    }
+
     NSString *fixedPath = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
-    NSString *shareName = [self shareNameFromPath:fixedPath];
+    NSString *shareName = [fixedPath shareName];
 
     smb_tid shareIdentifier = -1;
     smb_tree_connect(self.session, [shareName cStringUsingEncoding:NSUTF8StringEncoding], &shareIdentifier);
@@ -254,8 +295,9 @@
         return nil;
     }
 
-    NSString *relativePath = [self filePathExcludingSharePathFromPath:fixedPath];
+    NSString *relativePath = [fixedPath stringByExcludingSharePath];
     relativePath = [NSString stringWithFormat:@"\\%@", relativePath];
+    relativePath = [relativePath stringByReplacingOccurrencesOfString:@"/" withString:@"\\"]; //replace forward slashes with backslashes
 
     smb_stat fileStat = smb_fstat(self.session, shareIdentifier, [relativePath cStringUsingEncoding:NSUTF8StringEncoding]);
     if (!fileStat)
@@ -265,7 +307,8 @@
         return nil;
     }
 
-    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat session:self parentDirectoryFilePath:fixedPath];
+    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat
+                                                           filePath:fixedPath];
 
     smb_stat_destroy(fileStat);
     smb_tree_disconnect(self.session, shareIdentifier);
@@ -303,7 +346,7 @@
                 continue;
             
             NSString *shareNameString = [NSString stringWithCString:shareName encoding:NSUTF8StringEncoding];
-            TOSMBSessionFile *share = [[TOSMBSessionFile alloc] initWithShareName:shareNameString session:self];
+            TOSMBSessionFile *share = [[TOSMBSessionFile alloc] initWithShareName:shareNameString];
             [shareList addObject:share];
         }
         
@@ -318,7 +361,7 @@
     path = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
     
     //Work out just the share name from the path (The first directory in the string)
-    NSString *shareName = [self shareNameFromPath:path];
+    NSString *shareName = [path shareName];
     
     //Connect to that share
     //If not, make a new connection
@@ -335,7 +378,7 @@
     }
     
     //work out the remainder of the file path and create the search query
-    NSString *relativePath = [self filePathExcludingSharePathFromPath:path];
+    NSString *relativePath = [path stringByExcludingSharePath];
     //prepend double backslashes
     relativePath = [NSString stringWithFormat:@"\\%@",relativePath];
     //replace any additional forward slashes with backslashes
@@ -362,7 +405,12 @@
             continue;
         }
         
-        TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:item session:self parentDirectoryFilePath:path];
+        NSString *nameStr = [[NSString alloc] initWithBytes:name length:strlen(name) encoding:NSUTF8StringEncoding];
+        
+        NSString *pathWithName = [path stringByAppendingPathComponent:nameStr];
+        
+        TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:item
+                                                               filePath:pathWithName];
         [fileList addObject:file];
     }
     smb_stat_list_destroy(statList);
@@ -411,7 +459,9 @@
 }
 
 #pragma mark - Download Tasks -
-- (TOSMBSessionDownloadTask *)downloadTaskForFileAtPath:(NSString *)path destinationPath:(NSString *)destinationPath delegate:(id<TOSMBSessionDownloadTaskDelegate>)delegate
+- (TOSMBSessionDownloadTask *)downloadTaskForFileAtPath:(NSString *)path
+                                        destinationPath:(NSString *)destinationPath
+                                               delegate:(id<TOSMBSessionDownloadTaskDelegate>)delegate
 {
     TOSMBSessionDownloadTask *task = [[TOSMBSessionDownloadTask alloc] initWithSession:self filePath:path destinationPath:destinationPath delegate:delegate];
     self.downloadTasks = [self.downloadTasks ? : @[] arrayByAddingObjectsFromArray:@[task]];
@@ -420,9 +470,9 @@
 
 - (TOSMBSessionDownloadTask *)downloadTaskForFileAtPath:(NSString *)path
                                         destinationPath:(NSString *)destinationPath
-                                        progressHandler:(void (^)(uint64_t totalBytesWritten, uint64_t totalBytesExpected))progressHandler
-                                      completionHandler:(void (^)(NSString *filePath))completionHandler
-                                            failHandler:(void (^)(NSError *error))failHandler
+                                        progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
+                                      completionHandler:(TOSMBSessionDownloadTaskSuccsessBlock)completionHandler
+                                            failHandler:(TOSMBSessionTaskFailBlock)failHandler
 {
     TOSMBSessionDownloadTask *task = [[TOSMBSessionDownloadTask alloc] initWithSession:self filePath:path destinationPath:destinationPath progressHandler:progressHandler successHandler:completionHandler failHandler:failHandler];
     self.downloadTasks = [self.downloadTasks ? : @[] arrayByAddingObjectsFromArray:@[task]];
@@ -430,64 +480,92 @@
 }
 
 #pragma mark - Upload Tasks -
-- (TOSMBSessionUploadTask *)uploadTaskForFileAtPath:(NSString *)path data:(NSData *)data progressHandler:(void (^)(uint64_t, uint64_t))progressHandler completionHandler:(void (^)())completionHandler failHandler:(void (^)(NSError *))failHandler {
+- (TOSMBSessionUploadTask *)uploadTaskForSurceFilePath:(NSString *)srcPath
+                                       destinationPath:(NSString *)dstPath
+                                       progressHandler:(TOSMBSessionTaskProgressBlock)progressHandler
+                                     completionHandler:(TOSMBSessionUploadTaskSuccessBlock)completionHandler
+                                           failHandler:(TOSMBSessionTaskFailBlock)failHandler {
+    
     TOSMBSessionUploadTask *task = [[TOSMBSessionUploadTask alloc] initWithSession:self
-                                                                              path:path
-                                                                              data:data
+                                                                        sourcePath:srcPath
+                                                                           dstPath:dstPath
                                                                    progressHandler:progressHandler
                                                                     successHandler:completionHandler
-                                                                       failHandler:failHandler];
+                                                                       failHandler:failHandler
+                                                                   ];
     
     self.uploadTasks = [self.uploadTasks ?: @[] arrayByAddingObject:task];
     
     return task;
 }
 
-#pragma mark - String Parsing -
-- (NSString *)shareNameFromPath:(NSString *)path
-{
-    path = [path copy];
-    
-    //Remove any potential slashes at the start
-    if ([[path substringToIndex:2] isEqualToString:@"//"]) {
-        path = [path substringFromIndex:2];
-    }
-    else if ([[path substringToIndex:1] isEqualToString:@"/"]) {
-        path = [path substringFromIndex:1];
-    }
-    
-    NSRange range = [path rangeOfString:@"/"];
-    
-    if (range.location != NSNotFound)
-        path = [path substringWithRange:NSMakeRange(0, range.location)];
-    
-    return path;
+#pragma mark - Remove Task
+
+-(TOSMBSessionRemoveTask *)removeTaskForItem:(NSString *)itemPath
+                           completionHandler:(dispatch_block_t)completionHandler
+                                 failHandler:(TOSMBSessionTaskFailBlock)failHandler {
+    TOSMBSessionRemoveTask *task = [[TOSMBSessionRemoveTask alloc] initWithSession:self
+                                                                        sourcePath:itemPath
+                                                                    successHandler:completionHandler
+                                                                       failHandler:failHandler];
+    return task;
 }
 
-- (NSString *)filePathExcludingSharePathFromPath:(NSString *)path
+#pragma mark - Create Folder Task
+
+-(TOSMBSessionCreateFolderTask *)createFolderAtPath:(NSString *)itemPath
+                           completionHandler:(TOSSMBSessionCreateFolderTaskSuccessBlock)completionHandler
+                                 failHandler:(TOSMBSessionTaskFailBlock)failHandler {
+    TOSMBSessionCreateFolderTask *task = [[TOSMBSessionCreateFolderTask alloc] initWithSession:self
+                                                                                    sourcePath:itemPath
+                                                                                successHandler:completionHandler
+                                                                                   failHandler:failHandler];
+    return task;
+}
+
+-(TOSMBSessionCopyTask *)copyItemFromPath:(NSString *)itemPath
+                                   toPath:(NSString *)dstPath
+                          progressHandler:(TOSMBSessionTaskProgressBlock)progresshandler
+                        completionHandler:(TOSMBSessionCopyTaskSuccessBlock)successHandler
+                              failHandler:(TOSMBSessionTaskFailBlock)failHandler
 {
-    path = [path copy];
-    
-    //Remove any potential slashes at the start
-    if ([[path substringToIndex:2] isEqualToString:@"//"] || [[path substringToIndex:2] isEqualToString:@"\\\\"]) {
-        path = [path substringFromIndex:2];
-    }
-    else if ([[path substringToIndex:1] isEqualToString:@"/"] || [[path substringToIndex:1] isEqualToString:@"\\"]) {
-        path = [path substringFromIndex:1];
-    }
-    
-    NSRange range = [path rangeOfString:@"/"];
-    if (range.location == NSNotFound) {
-        range = [path rangeOfString:@"\\"];
-    }
-    
-    if (range.location != NSNotFound)
-        path = [path substringFromIndex:range.location+1];
-    
-    return path;
+    TOSMBSessionCopyTask *copyTask = [[TOSMBSessionCopyTask alloc] initWithSession:self
+                                                                        sourcePath:itemPath
+                                                                           dstPath:dstPath
+                                                                   progressHandler:progresshandler
+                                                                    successHandler:successHandler
+                                                                       failHandler:failHandler];
+    return copyTask;
+}
+
+-(TOSMBSessionMoveTask *)moveItemFromPath:(NSString *)itemPath
+                                   toPath:(NSString *)dstPath
+                        completionHandler:(TOSMBSessionMoveTaskSuccessBlock)successHandler
+                              failHandler:(TOSMBSessionTaskFailBlock)failHandler
+{
+    TOSMBSessionMoveTask *moveTask = [[TOSMBSessionMoveTask alloc] initWithSession:self
+                                                                        sourcePath:itemPath
+                                                                           dstPath:dstPath
+                                                                    successHandler:successHandler
+                                                                       failHandler:failHandler];
+    return moveTask;
+}
+
+-(TOSMBSessionRenameTask *)renameItemAtPath:(NSString *)itemPath
+                                   withName:(NSString *)name
+                          completionHandler:(TOSMBSessionMoveTaskSuccessBlock)successHandler
+                                failHandler:(TOSMBSessionTaskFailBlock)failHandler
+{
+    TOSMBSessionRenameTask *renameTask = [[TOSMBSessionRenameTask alloc] initWithSession:self
+                                                                              sourcePath:itemPath
+                                                                                 newName:name
+                                                                          successHandler:successHandler
+                                                                             failHandler:failHandler];
+    return renameTask;
 }
 
 #pragma mark - Accessors -
+
 - (NSInteger)guest
 {
     if (self.session == NULL)

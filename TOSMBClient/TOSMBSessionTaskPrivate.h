@@ -28,37 +28,33 @@
 #import "TOSMBSessionTask.h"
 #import "TOSMBSession.h"
 #import "TOSMBSessionFilePrivate.h"
-#import "smb_defs.h"
-#import "smb_file.h"
-#import "smb_session.h"
-#import "smb_share.h"
+#import "TOSMBSessionPrivate.h"
+#import "bdsm.h"
+#import "TOSMBSessionStream.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol TOSMBSessionConcreteTask <NSObject>
 
-- (void)performTaskWithOperation:(__weak NSBlockOperation *)weakOperation;
+- (void)performTask;
 
 @end
+
+@class TOSMBShare;
 
 @interface TOSMBSessionTask ()
 
 @property (nonatomic, weak) TOSMBSession *session;
-@property (nonatomic, assign) TOSMBSessionTaskState state;
-@property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskIdentifier;
+@property (nonatomic, strong) TOSMBShare *share;
+@property (nonatomic) TOSMBSessionTaskState state;
 
-@property (nonatomic, assign, nullable) smb_session *smbSession;
 @property (nonatomic, strong, null_resettable) NSBlockOperation *taskOperation;
-@property (nonatomic, readonly) void (^cleanupBlock)(smb_tid treeID, smb_fd fileID);
-
 /** Feedback handlers */
 @property (nonatomic, weak) id<TOSMBSessionTaskDelegate> delegate;
-@property (nonatomic, copy) void (^progressHandler)(uint64_t totalBytesWritten, uint64_t totalBytesExpected);
-@property (nonatomic, copy) void (^failHandler)(NSError *error);
+@property (nonatomic, copy) TOSMBSessionTaskProgressBlock progressHandler;
+@property (nonatomic, copy) TOSMBSessionTaskFailBlock failHandler;
 
-- (instancetype)initWithSession:(TOSMBSession *)session;
-
-- (TOSMBSessionFile *)requestFileForItemAtPath:(NSString *)filePath inTree:(smb_tid)treeID;
+- (instancetype)initWithSession:(TOSMBSession *)session share:(TOSMBShare *)share;
 
 - (void)fail;
 - (void)didFailWithError:(NSError *)error;

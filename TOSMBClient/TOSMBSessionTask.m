@@ -21,12 +21,19 @@
 // -------------------------------------------------------------------------------
 
 #import "TOSMBSessionTaskPrivate.h"
+#import "TOSMBSessionStreamPrivate.h"
+#import "TOSMBShare.h"
+
+@interface TOSMBSessionTask ()
+
+@end
 
 @implementation TOSMBSessionTask
 
-- (instancetype)initWithSession:(TOSMBSession *)session {
+- (instancetype)initWithSession:(TOSMBSession *)session share:(nonnull TOSMBShare *)share {
     if((self = [super init])) {
         self.session = session;
+        self.share = share;
     }
     
     return self;
@@ -39,9 +46,8 @@
         _taskOperation = [[NSBlockOperation alloc] init];
         
         __weak typeof(self) weakSelf = self;
-        __weak NSBlockOperation *weakOperation = _taskOperation;
         [_taskOperation addExecutionBlock:^{
-            [weakSelf performTaskWithOperation:weakOperation];
+            [weakSelf prepare];
         }];
         
         _taskOperation.completionBlock = ^{
@@ -51,70 +57,43 @@
     return _taskOperation;
 }
 
-- (void (^)(smb_tid treeID, smb_fd fileID))cleanupBlock {
-    return ^(smb_tid treeID, smb_fd fileID) {
-        
-        //Release the background task handler, making the app eligible to be suspended now
-        if (self.backgroundTaskIdentifier) {
-            [[UIApplication sharedApplication] endBackgroundTask:self.backgroundTaskIdentifier];
-            self.backgroundTaskIdentifier = 0;
-        }
-        
-        if (self.taskOperation && treeID) {
-            smb_tree_disconnect(self.smbSession, treeID);
-        }
-        
-        if (self.smbSession && fileID) {
-            smb_fclose(self.smbSession, fileID);
-        }
-
-        
-        if (self.smbSession) {
-            smb_session_destroy(self.smbSession);
-            self.smbSession = nil;
-        }
-    };
-}
-
 #pragma mark - Task Methods
 
-- (TOSMBSessionFile *)requestFileForItemAtPath:(NSString *)filePath inTree:(smb_tid)treeID
+-(void)prepare
 {
-    const char *fileCString = [filePath cStringUsingEncoding:NSUTF8StringEncoding];
-    smb_stat fileStat = smb_fstat(self.smbSession, treeID, fileCString);
-    if (!fileStat)
-        return nil;
+    BOOL prepeared = YES;
     
-    TOSMBSessionFile *file = [[TOSMBSessionFile alloc] initWithStat:fileStat session:nil parentDirectoryFilePath:filePath];
+    NSError *error = [self.session attemptConnectionToShare:self.share];
     
-    smb_stat_destroy(fileStat);
+    if (self.share.connected == NO)
+    {
+        NSError *error = nil;
+        prepeared = [self.share connectToShare:&error];
+    }
     
-    return file;
+    if (!error && prepeared)
+    {
+        [self performTask];
+    }
+    else
+    {
+        [self didFailWithError:error];
+    }
 }
 
-- (void)performTaskWithOperation:(__weak NSBlockOperation *)operation {
+- (void)performTask {
     return;
 }
 
 #pragma mark - Public Control Methods
 
-- (void)resume
+- (void)start
 {
     if (self.state == TOSMBSessionTaskStateRunning)
         return;
     
     [self.session.taskQueue addOperation:self.taskOperation];
     self.state = TOSMBSessionTaskStateRunning;
-}
-
-- (void)suspend
-{
-    if (self.state != TOSMBSessionTaskStateRunning)
-        return;
-    
-    [self.taskOperation cancel];
-    self.state = TOSMBSessionTaskStateSuspended;
-    self.taskOperation = nil;
 }
 
 - (void)cancel
@@ -126,6 +105,11 @@
     self.state = TOSMBSessionTaskStateCancelled;
     
     self.taskOperation = nil;
+}
+
+-(BOOL)isCanceled
+{
+    return self.state == TOSMBSessionTaskStateCancelled;
 }
 
 #pragma mark - Private Control Methods

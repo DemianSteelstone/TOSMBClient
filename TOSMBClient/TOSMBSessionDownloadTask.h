@@ -26,6 +26,8 @@
 @class TOSMBSession;
 @class TOSMBSessionDownloadTask;
 
+typedef void(^TOSMBSessionDownloadTaskSuccsessBlock)(NSString *path);
+
 @protocol TOSMBSessionDownloadTaskDelegate <TOSMBSessionTaskDelegate>
 
 @optional
@@ -54,17 +56,6 @@
 totalBytesExpectedToReceive:(int64_t)totalBytesToReceive;
 
 /**
- Delegate event that is called when a file download that was previously suspended is now resumed.
- 
- @param downloadTask The download task object calling this delegate method.
- @param byteOffset The byte offset at which the download resumed.
- @param totalBytesToWrite The number of bytes expected to write for this entire file.
- */
-- (void)downloadTask:(TOSMBSessionDownloadTask *)downloadTask
-   didResumeAtOffset:(uint64_t)byteOffset
-totalBytesExpectedToReceive:(uint64_t)totalBytesToReceive;
-
-/**
  Delegate event that is called when the file did not successfully complete.
  
  @param downloadTask The download task object calling this delegate method.
@@ -76,16 +67,7 @@ totalBytesExpectedToReceive:(uint64_t)totalBytesToReceive;
 
 @interface TOSMBSessionDownloadTask : TOSMBSessionTask
 
-/** The file path to the target file on the SMB network device. */
-@property (readonly) NSString *sourceFilePath;
-
 /** The target file path that the file will be downloaded to. */
 @property (readonly) NSString *destinationFilePath;
-
-/** The number of bytes presently downloaded by this task */
-@property (readonly) int64_t countOfBytesReceived;
-
-/** The total number of bytes we expect to download */
-@property (readonly) int64_t countOfBytesExpectedToReceive;
 
 @end

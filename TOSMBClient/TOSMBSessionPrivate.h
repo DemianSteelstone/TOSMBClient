@@ -26,11 +26,12 @@
 #import "TOSMBSession.h"
 #import "smb_session.h"
 
+@class TOSMBShare;
+
 @interface TOSMBSession ()
 
+- (NSError *)attemptConnectionToShare:(TOSMBShare *)share;
 - (NSError *)attemptConnectionWithSessionPointer:(smb_session *)session;
-- (NSString *)shareNameFromPath:(NSString *)path;
-- (NSString *)filePathExcludingSharePathFromPath:(NSString *)path;
 
 @end
 

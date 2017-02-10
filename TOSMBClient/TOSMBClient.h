@@ -20,6 +20,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 // -------------------------------------------------------------------------------
 
+#import <Foundation/Foundation.h>
+
 //! Project version number for TOSMBClient.
 FOUNDATION_EXPORT double TOSMBClientVersionNumber;
 
@@ -31,8 +33,6 @@ FOUNDATION_EXPORT const unsigned char TOSMBClientVersionString[];
 #import "TOSMBSession.h"
 #import "TOSMBSessionFile.h"
 #import "TOSMBSessionTask.h"
-#import "TOSMBSessionDownloadTask.h"
-#import "TOSMBSessionUploadTask.h"
 
 #import "TONetBIOSNameService.h"
 #import "TONetBIOSNameServiceEntry.h"

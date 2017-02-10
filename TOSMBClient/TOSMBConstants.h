@@ -35,7 +35,9 @@ typedef NS_ENUM(NSInteger, TOSMBSessionErrorCode)
     TOSMBSessionErrorCodeShareConnectionFailed = 1004,              /* Connection attempt to a share in the device failed. */
     TOSMBSessionErrorCodeFileNotFound = 1005,                       /* Unable to locate the requested file. */
     TOSMBSessionErrorCodeDirectoryDownloaded = 1006,                /* A directory was attempted to be downloaded. */
-    TOSMBSessionErrorCodeFileDownloadFailed = 1007,                /* The file could not be downloaded, possible network error. */
+    TOSMBSessionErrorCodeFileReadFailed = 1007,                     /* The file could not be readed, possible network error. */
+    TOSMBSessionErrorCodeFileWriteFailed = 1008,                    /* The file could not be writed, possible network error. */
+    TOSMBSessionErrorCodeDeleteFailed = 1009,
 
 };
 
@@ -70,5 +72,6 @@ typedef NS_ENUM(NSUInteger, TOSMBSessionTaskState) {
 extern TONetBIOSNameServiceType TONetBIOSNameServiceTypeForCType(char type);
 extern char TONetBIOSNameServiceCTypeForType(char type);
 
+extern NSString * localizedStatusCode(uint32_t status);
 extern NSString *localizedStringForErrorCode(TOSMBSessionErrorCode errorCode);
 extern NSError *errorForErrorCode(TOSMBSessionErrorCode errorCode);
