@@ -131,7 +131,7 @@ totalBytesExpectedToSend:(long long)totalBytesExpectedToSend {
                                                                                 error:NULL];
     long long expectedSize = [attributes fileSize];
     
-    NSData *data;
+    
     ssize_t totalBytesWritten = 0;
     NSError *error = nil;
     
@@ -142,7 +142,7 @@ totalBytesExpectedToSend:(long long)totalBytesExpectedToSend {
         while (!done)
         {
             @autoreleasepool {
-                data = [fileHandle readDataOfLength: TOSMBSessionStreamChunkSize];
+                NSData *data = [fileHandle readDataOfLength: TOSMBSessionStreamChunkSize];
                 if (data.length == 0)
                 {
                     done = YES;
