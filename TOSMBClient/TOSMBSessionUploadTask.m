@@ -137,19 +137,31 @@ totalBytesExpectedToSend:(long long)totalBytesExpectedToSend {
     
     if ([writeStream open:&error])
     {
-        while (((data = [fileHandle readDataOfLength: TOSMBSessionStreamChunkSize]).length > 0))
+        BOOL done = NO;
+        
+        while (!done)
         {
-            [writeStream writeData:data error:&error];
-            
-            if (self.isCanceled || error)
-            {
-                break;
-            }
-            
-            NSUInteger bufferSize = data.length;
-            totalBytesWritten += bufferSize;
-            
-            [self didSendBytes:bufferSize totalBytesSent:totalBytesWritten totalBytesExpectedToSend:expectedSize];
+            @autoreleasepool {
+                data = [fileHandle readDataOfLength: TOSMBSessionStreamChunkSize];
+                if (data.length == 0)
+                {
+                    done = YES;
+                }
+                else
+                {
+                    [writeStream writeData:data error:&error];
+                    
+                    if (self.isCanceled || error)
+                    {
+                        break;
+                    }
+                    
+                    NSUInteger bufferSize = data.length;
+                    totalBytesWritten += bufferSize;
+                    
+                    [self didSendBytes:bufferSize totalBytesSent:totalBytesWritten totalBytesExpectedToSend:expectedSize];
+                }
+            };
         }
     }
     
