@@ -57,7 +57,7 @@
 {
     NSString *formattedPath = [self copy];
     formattedPath = [NSString stringWithFormat:@"\\%@",formattedPath];
-    formattedPath = [formattedPath stringByReplacingOccurrencesOfString:@"/" withString:@"\\\\"];
+    formattedPath = [formattedPath stringByReplacingOccurrencesOfString:@"/" withString:@"\\"];
     return formattedPath;
 }
 
