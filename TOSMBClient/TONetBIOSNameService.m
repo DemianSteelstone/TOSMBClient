@@ -21,6 +21,7 @@
 // -------------------------------------------------------------------------------
 
 #import <arpa/inet.h>
+#include <netdb.h>
 
 #import "TOSMBConstants.h"
 #import "TONetBIOSNameService.h"
@@ -121,7 +122,13 @@ static void on_entry_removed(void *p_opaque, netbios_ns_entry *entry)
     struct in_addr addr;
     int result = netbios_ns_resolve(self.nameService, [name cStringUsingEncoding:NSUTF8StringEncoding], TONetBIOSNameServiceCTypeForType(type), &addr.s_addr);
     if (result < 0)
-        return nil;
+    {
+        struct hostent *host_entry = gethostbyname(name.UTF8String);
+        if (host_entry != NULL)
+            addr = *(struct in_addr *)host_entry->h_addr_list[0];
+        else
+            return nil;
+    }
     
     char *ipAddress = inet_ntoa(addr);
     if (ipAddress == NULL) {

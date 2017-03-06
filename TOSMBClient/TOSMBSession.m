@@ -236,7 +236,8 @@
         self.netbiosName = [nameService lookupNetworkNameForIPAddress:self.ipAddress];
     
     //If there is STILL no IP address after the resolution, there's no chance of a successful connection
-    if (self.ipAddress == nil) {
+    if (self.ipAddress == nil || self.netbiosName == nil)
+    {
         return errorForErrorCode(TOSMBSessionErrorCodeUnableToResolveAddress);
     }
     
