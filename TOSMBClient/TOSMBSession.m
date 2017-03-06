@@ -401,8 +401,9 @@
     for (NSInteger i = 0; i < listCount; i++) {
         smb_stat item = smb_stat_list_at(statList, i);
         const char* name = smb_stat_name(item);
-        if (name[0] == '.') { //skip hidden files
-            continue;
+        if (name[0] == '.') { 
+            if (strlen(name) == 1 || name[1] == '.')
+                continue;
         }
         
         NSString *nameStr = [[NSString alloc] initWithBytes:name length:strlen(name) encoding:NSUTF8StringEncoding];
