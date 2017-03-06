@@ -37,7 +37,9 @@
 @interface TOSMBSession : NSObject
 
 @property (nonatomic, copy) NSString *hostName;
+
 @property (nonatomic, copy) NSString *ipAddress;
+@property (nonatomic, copy) NSString *netbiosName;
 
 @property (nonatomic, copy) NSString *userName;
 @property (nonatomic, copy) NSString *password;

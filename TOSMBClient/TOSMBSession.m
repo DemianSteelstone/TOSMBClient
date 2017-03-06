@@ -226,14 +226,14 @@
     }
     
     //If only one piece of information was supplied, use NetBIOS to resolve the other
-    if (self.ipAddress.length == 0 || self.hostName.length == 0) {
-        TONetBIOSNameService *nameService = [[TONetBIOSNameService alloc] init];
-        
-        if (self.ipAddress == nil)
-            self.ipAddress = [nameService resolveIPAddressWithName:self.hostName type:TONetBIOSNameServiceTypeFileServer];
-        else
-            self.hostName = [nameService lookupNetworkNameForIPAddress:self.ipAddress];
+    TONetBIOSNameService *nameService = [[TONetBIOSNameService alloc] init];
+    if (self.ipAddress.length == 0)
+    {
+        self.ipAddress = [nameService resolveIPAddressWithName:self.hostName type:TONetBIOSNameServiceTypeFileServer];
     }
+    
+    if (self.netbiosName == nil)
+        self.netbiosName = [nameService lookupNetworkNameForIPAddress:self.ipAddress];
     
     //If there is STILL no IP address after the resolution, there's no chance of a successful connection
     if (self.ipAddress == nil) {
@@ -243,7 +243,7 @@
     //Convert the IP Address and hostname values to their C equivalents
     struct in_addr addr;
     inet_aton([self.ipAddress cStringUsingEncoding:NSASCIIStringEncoding], &addr);
-    const char *hostName = [self.hostName cStringUsingEncoding:NSUTF8StringEncoding];
+    const char *hostName = [self.netbiosName cStringUsingEncoding:NSUTF8StringEncoding];
     
     //Attempt a connection
     NSInteger result = smb_session_connect(session, hostName, addr.s_addr, SMB_TRANSPORT_TCP);
