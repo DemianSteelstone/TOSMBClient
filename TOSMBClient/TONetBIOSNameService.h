@@ -35,6 +35,7 @@ typedef void (^TONetBIOSNameServiceDiscoveryEvent)(TONetBIOSNameServiceEntry *en
 
 /** True when device discovery has been started */
 @property (nonatomic, readonly) BOOL discovering;
+@property (nonatomic) NSInteger maxTriesCount;
 
 // -------------------------------------------------------------------------------
 

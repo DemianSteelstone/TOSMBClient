@@ -99,6 +99,7 @@ static void on_entry_removed(void *p_opaque, netbios_ns_entry *entry)
 {
     if (self = [super init]) {
         _nameService = netbios_ns_new();
+        _maxTriesCount = 1;
         if (_nameService == NULL) {
             return nil;
         }
@@ -188,11 +189,19 @@ static void on_entry_removed(void *p_opaque, netbios_ns_entry *entry)
     if (address == nil)
         return nil;
     
+    return [self lookupNetworkNameForIPAddress:address triesCount:0];
+}
+
+- (NSString *)lookupNetworkNameForIPAddress:(NSString *)address triesCount:(NSInteger)tries
+{
+    if (tries >= self.maxTriesCount)
+        return nil;
+    
     struct in_addr  addr;
     inet_aton([address cStringUsingEncoding:NSASCIIStringEncoding], &addr);
     char *addressString = (char *)netbios_ns_inverse(self.nameService, addr.s_addr);
     if (addressString == NULL) {
-        return nil;
+        return [self lookupNetworkNameForIPAddress:address triesCount:(tries+1)];
     }
     
     return [NSString stringWithCString:addressString encoding:NSUTF8StringEncoding];

@@ -226,15 +226,19 @@
     }
     
     //If only one piece of information was supplied, use NetBIOS to resolve the other
-    TONetBIOSNameService *nameService = [[TONetBIOSNameService alloc] init];
+    
     if (self.ipAddress.length == 0)
     {
+        TONetBIOSNameService *nameService = [[TONetBIOSNameService alloc] init];
         self.ipAddress = [nameService resolveIPAddressWithName:self.hostName type:TONetBIOSNameServiceTypeFileServer];
     }
     
     if (self.netbiosName == nil)
+    {
+        TONetBIOSNameService *nameService = [[TONetBIOSNameService alloc] init];
+        nameService.maxTriesCount = 4;
         self.netbiosName = [nameService lookupNetworkNameForIPAddress:self.ipAddress];
-    
+    }
     //If there is STILL no IP address after the resolution, there's no chance of a successful connection
     if (self.ipAddress == nil || self.netbiosName == nil)
     {
