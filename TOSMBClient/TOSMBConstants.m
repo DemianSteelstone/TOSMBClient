@@ -77,6 +77,18 @@ NSString *localizedStringForErrorCode(TOSMBSessionErrorCode errorCode)
         case TOSMBSessionErrorCodeFileReadFailed:
             errorMessage = @"Read failed - check your connection.";
             break;
+        case TOSMBSessionErrorCodeFileWriteFailed:
+            errorMessage = @"Write failed - check your connection.";
+            break;
+        case TOSMBSessionErrorCodeDeleteFailed:
+            errorMessage = @"Delete failed - check your connection.";
+            break;
+        case TOSMBSessionErrorCodeBrokenSession:
+            errorMessage = @"Something is going wrong.";
+            break;
+        case TOSMBSessionErrorCodeUnableToResolveNetbiosName:
+            errorMessage = @"Unable to resolve device netbios name";
+            break;
         case TOSMBSessionErrorCodeUnknown:
         default:
             errorMessage = @"Unknown Error Occurred.";
@@ -85,8 +97,6 @@ NSString *localizedStringForErrorCode(TOSMBSessionErrorCode errorCode)
     
     return NSLocalizedString(errorMessage, @"");
 }
-
-
 
 NSString * localizedStatusCode(uint32_t status)
 {

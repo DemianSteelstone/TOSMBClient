@@ -193,25 +193,30 @@
     return [self attemptConnectionWithSessionPointer:share.smbSession];
 }
 
+-(void)resetSession
+{
+    smb_session_destroy(self.session);
+    self.session = smb_session_new();
+    self.connected = NO;
+}
+
 - (NSError *)attemptConnectionWithSessionPointer:(smb_session *)session
 {
-//    //There's no point in attempting a potentially costly TCP attempt if we're not even on a local network.
-//    if ([self deviceIsOnWiFi] == NO) {
-//        return errorForErrorCode(TOSMBSessionErrorNotOnWiFi);
-//    }
-    
     // If we're connecting from a download task, and the sessions match, make sure to
     // refresh them periodically
     if (self.session == session) {
         if (self.lastRequestDate && [[NSDate date] timeIntervalSinceDate:self.lastRequestDate] > 60) {
-            smb_session_destroy(self.session);
-            self.session = smb_session_new();
+            [self resetSession];
             session = self.session;
-            
-            self.connected = NO;
         }
         
         self.lastRequestDate = [NSDate date];
+    }
+    
+    if (session == nil)
+    {
+        [self resetSession];
+        session = self.session;
     }
     
     //Don't attempt another connection if we already made it through
@@ -240,9 +245,19 @@
         self.netbiosName = [nameService lookupNetworkNameForIPAddress:self.ipAddress];
     }
     //If there is STILL no IP address after the resolution, there's no chance of a successful connection
-    if (self.ipAddress == nil || self.netbiosName == nil)
+    if (self.ipAddress == nil)
     {
         return errorForErrorCode(TOSMBSessionErrorCodeUnableToResolveAddress);
+    }
+    
+    if (self.netbiosName == nil)
+    {
+        return errorForErrorCode(TOSMBSessionErrorCodeUnableToResolveNetbiosName);
+    }
+    
+    if (session == nil)
+    {
+        return errorForErrorCode(TOSMBSessionErrorCodeBrokenSession);
     }
     
     //Convert the IP Address and hostname values to their C equivalents

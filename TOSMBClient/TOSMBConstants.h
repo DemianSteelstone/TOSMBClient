@@ -38,6 +38,8 @@ typedef NS_ENUM(NSInteger, TOSMBSessionErrorCode)
     TOSMBSessionErrorCodeFileReadFailed = 1007,                     /* The file could not be readed, possible network error. */
     TOSMBSessionErrorCodeFileWriteFailed = 1008,                    /* The file could not be writed, possible network error. */
     TOSMBSessionErrorCodeDeleteFailed = 1009,
+    TOSMBSessionErrorCodeBrokenSession = 1010,                      /* Something is going wrong. */
+    TOSMBSessionErrorCodeUnableToResolveNetbiosName = 1011,         /* Unable to resolva netbios name */
 
 };
 
