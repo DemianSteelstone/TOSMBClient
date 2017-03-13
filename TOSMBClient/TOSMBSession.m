@@ -144,6 +144,10 @@
     }
 }
 
+-(NSString*)address {
+    return self.hostName.length ? self.hostName : self.ipAddress;
+}
+
 #pragma mark - Authorization -
 - (void)setLoginCredentialsWithUserName:(NSString *)userName password:(NSString *)password
 {
