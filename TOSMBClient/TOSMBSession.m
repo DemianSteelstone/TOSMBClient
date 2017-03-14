@@ -239,7 +239,8 @@
     if (self.ipAddress.length == 0)
     {
         TONetBIOSNameService *nameService = [[TONetBIOSNameService alloc] init];
-        self.ipAddress = [nameService resolveIPAddressWithName:self.hostName type:TONetBIOSNameServiceTypeFileServer];
+        self.ipAddress = [nameService resolveIPAddressWithName:self.hostName.uppercaseString
+                                                          type:TONetBIOSNameServiceTypeFileServer];
     }
     
     if (self.netbiosName == nil)
