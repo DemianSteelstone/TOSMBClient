@@ -31,6 +31,8 @@
 #import "netbios_ns.h"
 #import "netbios_defs.h"
 
+#import "HostResolver.h"
+
 const NSTimeInterval kTONetBIOSNameServiceDiscoveryTimeOut = 4.0f;
 
 // -------------------------------------------------------------------------------
@@ -197,14 +199,12 @@ static void on_entry_removed(void *p_opaque, netbios_ns_entry *entry)
     if (tries >= self.maxTriesCount)
         return nil;
     
-    struct in_addr  addr;
-    inet_aton([address cStringUsingEncoding:NSASCIIStringEncoding], &addr);
-    char *addressString = (char *)netbios_ns_inverse(self.nameService, addr.s_addr);
-    if (addressString == NULL) {
+    NSArray *hostAddresses = [HostResolver hostnamesForAddress:address];
+    if (hostAddresses.count == 0) {
         return [self lookupNetworkNameForIPAddress:address triesCount:(tries+1)];
     }
     
-    return [NSString stringWithCString:addressString encoding:NSUTF8StringEncoding];
+    return hostAddresses.firstObject;
 }
 
 - (void)lookupNetworkNameForIPAddress:(NSString *)address success:(void (^)(NSString *))success failure:(void (^)(void))failure
