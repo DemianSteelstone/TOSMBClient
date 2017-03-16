@@ -402,6 +402,11 @@
         return nil;
     }
     
+    if (path.UTF8String[path.length-1] != (@"/").UTF8String[0])
+    {
+        path = [path stringByAppendingString:@"/"];
+    }
+    
     //work out the remainder of the file path and create the search query
     NSString *relativePath = [path stringByExcludingSharePath];
     //prepend double backslashes
