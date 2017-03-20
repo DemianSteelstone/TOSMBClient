@@ -199,13 +199,19 @@ static void on_entry_removed(void *p_opaque, netbios_ns_entry *entry)
     if (tries >= self.maxTriesCount)
         return nil;
     
-    NSArray *hostAddresses = [HostResolver hostnamesForAddress:address];
-    if (hostAddresses.count == 0) {
-        return [self lookupNetworkNameForIPAddress:address triesCount:(tries+1)];
+    struct in_addr  addr;
+    inet_aton([address cStringUsingEncoding:NSASCIIStringEncoding], &addr);
+    char *addressString = (char *)netbios_ns_inverse(self.nameService, addr.s_addr);
+    if (addressString == NULL) {
+        NSArray *hostAddresses = [HostResolver hostnamesForAddress:address];
+        if (hostAddresses.count == 0) {
+            return [self lookupNetworkNameForIPAddress:address triesCount:(tries+1)];
+        }
+        return hostAddresses.firstObject;
     }
-    
-    return hostAddresses.firstObject;
-}
+    else
+        return [NSString stringWithCString:addressString encoding:NSUTF8StringEncoding];
+ }
 
 - (void)lookupNetworkNameForIPAddress:(NSString *)address success:(void (^)(NSString *))success failure:(void (^)(void))failure
 {
