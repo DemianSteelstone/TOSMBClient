@@ -14,8 +14,11 @@
 {
     NSString *path = [self copy];
     
+    if (path.length == 0)
+        return nil;
+    
     //Remove any potential slashes at the start
-    if ([[path substringToIndex:2] isEqualToString:@"//"]) {
+    if (path.length > 2 && [[path substringToIndex:2] isEqualToString:@"//"]) {
         path = [path substringFromIndex:2];
     }
     else if ([[path substringToIndex:1] isEqualToString:@"/"]) {
