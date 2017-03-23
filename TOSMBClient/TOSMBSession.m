@@ -199,7 +199,8 @@
 
 -(void)resetSession
 {
-    smb_session_destroy(self.session);
+    if (self.session)
+        smb_session_destroy(self.session);
     self.session = smb_session_new();
     self.connected = NO;
 }
